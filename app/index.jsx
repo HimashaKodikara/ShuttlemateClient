@@ -7,7 +7,7 @@ export default function App() {
     <View style={styles.container}>
       <Text style={styles.Header}>Shuttlemate</Text>
       <StatusBar style="auto" />
-        <Link href="/profile" style={{color:'blue'}}>Go to</Link>
+        <Link href="/home" style={{color:'blue'}}>Go to Home</Link>
     </View>
   );
 }
