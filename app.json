@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shuttlemate",
     "slug": "shuttlemate",
-    "schema":"shuttlemate",
+    "schema": "shuttlemate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -26,7 +26,8 @@
       "favicon": "./assets/SC.jpg"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-font"
     ]
   }
 }

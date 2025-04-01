@@ -20,7 +20,17 @@ const TabsLayout = () => {
   return (
     <Tabs
       screenOptions={{
-        tabBarShowLabel: false
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: '#FFA001',
+        tabBarInactiveTintColor:'#CDCDE0',
+        marginTop:10,
+        tabBarStyle:{
+          backgroundColor:'#161622',
+          borderTopWidt:1,
+          borderTopColor:'#232533',
+          height:65,
+         
+        }
       }}
     >
 
@@ -40,30 +50,30 @@ const TabsLayout = () => {
         }}
       />
       <Tabs.Screen
-        name="create"
+        name="court"
         options={{
-          title: 'Create',
+          title: 'Court',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
-              icon={icons.plus}
+              icon={icons.bookmark}
               color={color}
-              name="Create"
+              name="Court"
               focused={focused}
             />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="coach"
         options={{
-          title: 'Profile',
+          title: 'Coach',
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={icons.profile}
               color={color}
-              name="Profile"
+              name="Coach"
               focused={focused}
             />
           ),
