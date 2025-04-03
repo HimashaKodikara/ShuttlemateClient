@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, ScrollView, Image, Dimensions, TouchableOpacity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import images from '../constants/images';
 import { Redirect,router } from 'expo-router';
-
+import 'expo-dev-client';
 const { width, height } = Dimensions.get('window');
 
 // Angled split image component

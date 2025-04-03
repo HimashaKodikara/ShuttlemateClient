@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shuttlemate",
     "slug": "shuttlemate",
-    "schema": "shuttlemate",
+    "schema": "huttlemate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,10 +17,13 @@
       "supportsTablet": true
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+        
+      },
+      "package": "com.anonymous.shuttlemate"
     },
     "web": {
       "favicon": "./assets/SC.jpg"
@@ -28,6 +31,15 @@
     "plugins": [
       "expo-router",
       "expo-font"
-    ]
+     
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "ca2c1e22-c124-4eb8-938f-f10bfe9730b6"
+      }
+    }
   }
 }

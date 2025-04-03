@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "902062135902",
+    "project_id": "shuttlemate-9bedd",
+    "storage_bucket": "shuttlemate-9bedd.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:902062135902:android:02d4a6ed9dbe191662b2cf",
+        "android_client_info": {
+          "package_name": "com.anonymous.shuttlemate"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "902062135902-ako076pvvfkt3ub41accnsguu74240id.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anonymous.shuttlemate",
+            "certificate_hash": "f313ddaa538e5fb41fabaa33f906d95e4cdb593c"
+          }
+        },
+        {
+          "client_id": "902062135902-u2gdc6rsgu4fkip7oljqttnam1fj9so0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anonymous.shuttlemate",
+            "certificate_hash": "7cb51dd4126815c6a0b0a1621b84a0b8360e4ad1"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMGhnBIfmIvt9cc52kuIWDLtekE6oVaW4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

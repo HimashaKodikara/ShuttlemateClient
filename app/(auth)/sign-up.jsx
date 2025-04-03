@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { Redirect, router } from 'expo-router';
-import images from '../../constants/images.js'
-import logo from '../../constants/icons.js'
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import firebase from "firebase/app";
-import Swal from 'sweetalert2';
-
-
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
+import { router } from 'expo-router';
+import images from '../../constants/images.js';
+import logo from '../../constants/icons.js';
+//import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -15,44 +14,107 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
 
 
+  const [request, response, promptAsync] = Google.useAuthRequest({
+      expoClientId: 'YOUR_EXPO_CLIENT_ID',
+      iosClientId: 'YOUR_IOS_CLIENT_ID',
+      androidClientId: 'YOUR_ANDROID_CLIENT_ID',
+      webClientId: '902062135902-u2gdc6rsgu4fkip7oljqttnam1fj9so0.apps.googleusercontent.com',
+    });
+  
   const sign = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+    
     setLoading(true);
     try {
       const auth = getAuth(); // Initialize Firebase Authentication
       const response = await createUserWithEmailAndPassword(auth, email, password);
-
-     
-
-      // Show success message with SweetAlert2
-      Swal.fire({
-        title: 'Success!',
-        text: 'Sign Up Successful! Please log in.',
-        icon: 'success',
-        confirmButtonText: 'OK'
-      })
-        .then(() => {
-        router.push('/sign-in');
-      });
+      
+      console.log(response);
+      
+      // Show success message with React Native Alert
+      Alert.alert(
+        "Success!",
+        "Sign Up Successful! Please log in.",
+        [
+          { 
+            text: "OK", 
+            onPress: () => {
+              // Navigate to sign-in page after the alert is closed
+              setTimeout(() => {
+                router.push('/sign-in');
+              }, 500);
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.log(error);
-      Swal.fire({
-        title: 'Error!',
-        text: 'Sign Up failed: ' + error.message,
-        icon: 'error',
-        confirmButtonText: 'OK'
-      });
+      
+      // Handle specific Firebase auth errors with user-friendly messages
+      let errorMessage = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'This email is already registered. Try signing in instead.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please use a stronger password.';
+      }
+      
+      Alert.alert(
+        "Sign Up Failed",
+        errorMessage,
+        [{ text: "OK" }]
+      );
     } finally {
       setLoading(false);
     }
   };
+  
 
-
+  const signInWithGoogle = async (credential) => {
+      setLoading(true);
+      try {
+        // Sign-in with the credential
+        const userCredential = await signInWithCredential(auth, credential);
+        console.log('Google sign-in successful:', userCredential.user);
+        
+        Alert.alert(
+          "Success!",
+          "Successfully logged in with Google.",
+          [
+            { 
+              text: "OK", 
+              onPress: () => {
+                // Navigate to home page after alert is closed
+                setTimeout(() => {
+                  router.push('/home');
+                }, 500);
+              }
+            }
+          ]
+        );
+      } catch (error) {
+        console.log('Google Sign-In Error:', error);
+        
+        Alert.alert(
+          "Google Sign-In Failed",
+          "An error occurred during Google sign-in. Please try again.",
+          [{ text: "OK" }]
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+  
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
         <Text style={styles.headerText}>Explore now</Text>
         <Text style={styles.subHeaderText}>Join with us today.</Text>
-
+        
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email address</Text>
           <TextInput
@@ -60,12 +122,13 @@ const Signup = () => {
             placeholderTextColor="#666"
             autoCapitalize="none"
             value={email}
-            placeholder='Ente your Email'
-            autoComplete='none'
+            placeholder='Enter your Email'
+            keyboardType="email-address"
+            autoComplete="email"
             onChangeText={(text) => setEmail(text)}
           />
         </View>
-
+        
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Password</Text>
           <TextInput
@@ -74,30 +137,47 @@ const Signup = () => {
             secureTextEntry={true}
             value={password}
             placeholder='Enter your Password'
-            autoComplete='none'
+            autoComplete="password-new"
             onChangeText={(text) => setPassword(text)}
           />
         </View>
-
-        <TouchableOpacity style={styles.createButton} onPress={sign}>
-          <Text style={styles.createButtonText}>Create account</Text>
+        
+        <TouchableOpacity 
+          style={styles.createButton} 
+          onPress={sign}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="black" size="small" />
+          ) : (
+            <Text style={styles.createButtonText}>Create account</Text>
+          )}
         </TouchableOpacity>
-
+        
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
           <Text style={styles.dividerText}>or</Text>
           <View style={styles.divider} />
         </View>
-
-        <TouchableOpacity style={styles.googleButton}>
-          <Image
-            source={logo.GoogleIcon}
-            style={styles.googleIcon}
-            resizeMode="contain"
-          />
-          <Text style={styles.googleButtonText}>Sign up with Google</Text>
-        </TouchableOpacity>
-
+        
+         <TouchableOpacity 
+                    style={styles.googleButton}
+                    onPress={() => promptAsync()}
+                    disabled={loading}>
+                    {loading ? (
+                      <ActivityIndicator color="black" size="small" />
+                    ) : (
+                      <>
+                        <Image
+                          source={logo.GoogleIcon}
+                          style={styles.googleIcon}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.googleButtonText}>Continue with Google</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+        
         {/* Sign-in section with background image */}
         <View style={styles.signinContainerWrapper}>
           <Image
@@ -107,7 +187,7 @@ const Signup = () => {
           />
           <View style={styles.signinContainer}>
             <Text style={styles.signinText}>Already have an account?</Text>
-            <TouchableOpacity
+            <TouchableOpacity 
               onPress={() => router.push('/sign-in')}
               activeOpacity={0.7}>
               <Text style={styles.signinLink}>Sign in</Text>
