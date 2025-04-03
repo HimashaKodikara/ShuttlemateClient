@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ScrollView, Image, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import images from '../constants/images';
+import { Redirect,router } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,7 +36,7 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Logo and App Name */}
+      
         <View style={styles.logoTextContainer}>
           <Image 
             source={images.Logo} 
@@ -45,7 +46,7 @@ export default function App() {
           <Text style={styles.heading}>ShuttleMate</Text>
         </View>
         
-        {/* Angled Split Images */}
+      
         <AngledSplitImageContainer 
           leftImage={images.SCImage1}
           rightImage={images.SCImage2}
@@ -54,16 +55,21 @@ export default function App() {
         
         {/* Tagline and Description */}
         <View style={styles.textSection}>
-          <Text style={styles.tagline}>Unleash your Potential</Text>
+          <Text style={styles.tagline}>Master the Court  Dominate the Game.</Text>
           <Text style={styles.description}>
             Continually practice and update{'\n'}your skills.
           </Text>
         </View>
         
         {/* CTA Button */}
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button}
+        onPress={() => router.push('/sign-in')}
+        activeOpacity={0.7}>
           <Text style={styles.buttonText}>Start Practicing</Text>
         </TouchableOpacity>
+
+        <StatusBar backgroundColor='#161622'
+        style='light'/>
       </ScrollView>
     </SafeAreaView>
   );
@@ -103,6 +109,7 @@ const styles = StyleSheet.create({
     width: width * 0.9,
     height: width * 0.6,
     alignSelf: 'center',
+    marginTop:50
   },
   splitImageContainerStyle: {
     marginVertical: 10,

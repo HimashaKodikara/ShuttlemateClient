@@ -12,6 +12,7 @@ import eyeHide from "../assets/icons/eye-hide.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import shop from "../assets/icons/shop.png";
+import GoogleIcon from "../assets/icons/google.png";
 
 export default {
   play,
@@ -27,5 +28,6 @@ export default {
   logout,
   eyeHide,
   eye,
-  shop
+  shop,
+  GoogleIcon
 };
