@@ -8,8 +8,8 @@ import { FIREBASE_AUTH } from '../../firebaseconfig.js';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-//import Images from '../../constants/icons.js'
 import icons from '../../constants/icons.js';
+import Toast from 'react-native-toast-message';
 
 // Make sure to call this at the top level
 WebBrowser.maybeCompleteAuthSession();
@@ -38,37 +38,46 @@ const SignIn = () => {
   }, [response]);
 
   const login = async () => {
-    // Your existing email/password login code remains the same
+    // Validate input fields
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
+      // Show toast message for empty fields
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: 'Error',
+        text2: 'Please enter both email and password',
+        visibilityTime: 3000,
+        autoHide: true,
+        topOffset: 30,
+        bottomOffset: 40,
+      });
       return;
     }
 
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
-      console.log(response);
-      router.push('/home');
-      // Alert.alert(
-      //   "Success!",
-      //   "Successfully logged in.",
-      //   [
-      //     { 
-      //       text: "OK", 
-      //       onPress: () => {
-      //         // Navigate to home page after alert is closed
-      //         setTimeout(() => {
-      //           router.push('/home');
-      //         }, 300);
-      //       }
-      //     }
-      //   ]
-      // );
+      // Handle successful login
+      Toast.show({
+        type: 'success',
+        position: 'top',
+        text1: 'Success',
+        text2: 'Successfully logged in',
+        visibilityTime: 3000,
+        autoHide: true,
+      });
+      
+      // Navigate after showing success toast
+      setTimeout(() => {
+        router.push('/home');
+      }, 1000);
     } catch (error) {
       console.log(error);
 
       // Handle specific Firebase auth errors with user-friendly messages
+      let errorTitle = "Login Failed";
       let errorMessage = error.message;
+      
       if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
       } else if (error.code === 'auth/user-not-found') {
@@ -79,11 +88,15 @@ const SignIn = () => {
         errorMessage = 'Too many failed login attempts. Please try again later.';
       }
 
-      Alert.alert(
-        "Login Failed",
-        errorMessage,
-        [{ text: "OK" }]
-      );
+      // Show toast for error
+      Toast.show({
+        type: 'error',
+        position: 'top',
+        text1: errorTitle,
+        text2: errorMessage,
+        visibilityTime: 3000,
+        autoHide: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -96,35 +109,34 @@ const SignIn = () => {
       const userCredential = await signInWithCredential(auth, credential);
       console.log('Google sign-in successful:', userCredential.user);
 
-      Alert.alert(
-        "Success!",
-        "Successfully logged in with Google.",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              // Navigate to home page after alert is closed
-              setTimeout(() => {
-                router.push('/home');
-              }, 500);
-            }
-          }
-        ]
-      );
+      Toast.show({
+        type: 'success',
+        position: 'bottom',
+        text1: 'Success',
+        text2: 'Successfully logged in with Google',
+        visibilityTime: 2000,
+      });
+
+      // Navigate to home page after toast shows
+      setTimeout(() => {
+        router.push('/home');
+      }, 1000);
     } catch (error) {
       console.log('Google Sign-In Error:', error);
 
-      Alert.alert(
-        "Google Sign-In Failed",
-        "An error occurred during Google sign-in. Please try again.",
-        [{ text: "OK" }]
-      );
+      Toast.show({
+        type: 'error',
+        position: 'bottom',
+        text1: 'Google Sign-In Failed',
+        text2: 'An error occurred during Google sign-in. Please try again.',
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Your existing JSX return stays mostly the same
+  // JSX return remains mostly the same
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -195,7 +207,7 @@ const SignIn = () => {
             <View style={styles.divider} />
           </View>
 
-          {/* Modified Google Sign-In button */}
+          {/* Google Sign-In button */}
           <TouchableOpacity
             style={styles.googleButton}
             onPress={() => promptAsync()}
@@ -223,6 +235,9 @@ const SignIn = () => {
           />
         </View>
       </ScrollView>
+      
+      {/* This line ensures Toast is properly rendered in your component hierarchy */}
+      <Toast />
     </SafeAreaView>
   )
 }
@@ -329,7 +344,6 @@ const styles = StyleSheet.create({
     height: 200,
   },
   button: {
-    // Adding style for the button that was missing from original
     marginBottom: 16,
   },
   passwordContainer: {

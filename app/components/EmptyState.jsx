@@ -5,8 +5,8 @@ const EmptyState = ({title,subtitle}) => {
   return (
     <View style={styles.container}>
       <Image source={images.Empty} resizeMode='contain' style={styles.image}/>
-      <Text style={{color:'white'}}>{title}</Text>
-      <Text style={{color:'white',marginTop:5}}>{subtitle}</Text>
+      <Text style={{color:'white', fontSize:24}}>{title}</Text>
+      <Text style={{color:'white',marginTop:5, fontSize:24}}>{subtitle}</Text>
     </View>
   )
 }
