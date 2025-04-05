@@ -8,6 +8,8 @@ import { FIREBASE_AUTH } from '../../firebaseconfig.js';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+//import Images from '../../constants/icons.js'
+import icons from '../../constants/icons.js';
 
 // Make sure to call this at the top level
 WebBrowser.maybeCompleteAuthSession();
@@ -16,6 +18,7 @@ const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setshowPassword] = useState(false);
   const auth = FIREBASE_AUTH;
 
   // Set up Google OAuth request
@@ -40,30 +43,30 @@ const SignIn = () => {
       Alert.alert("Error", "Please enter both email and password");
       return;
     }
-    
+
     setLoading(true);
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log(response);
-      
-      Alert.alert(
-        "Success!",
-        "Successfully logged in.",
-        [
-          { 
-            text: "OK", 
-            onPress: () => {
-              // Navigate to home page after alert is closed
-              setTimeout(() => {
-                router.push('/home');
-              }, 300);
-            }
-          }
-        ]
-      );
+      router.push('/home');
+      // Alert.alert(
+      //   "Success!",
+      //   "Successfully logged in.",
+      //   [
+      //     { 
+      //       text: "OK", 
+      //       onPress: () => {
+      //         // Navigate to home page after alert is closed
+      //         setTimeout(() => {
+      //           router.push('/home');
+      //         }, 300);
+      //       }
+      //     }
+      //   ]
+      // );
     } catch (error) {
       console.log(error);
-      
+
       // Handle specific Firebase auth errors with user-friendly messages
       let errorMessage = error.message;
       if (error.code === 'auth/invalid-email') {
@@ -75,7 +78,7 @@ const SignIn = () => {
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed login attempts. Please try again later.';
       }
-      
+
       Alert.alert(
         "Login Failed",
         errorMessage,
@@ -92,13 +95,13 @@ const SignIn = () => {
       // Sign-in with the credential
       const userCredential = await signInWithCredential(auth, credential);
       console.log('Google sign-in successful:', userCredential.user);
-      
+
       Alert.alert(
         "Success!",
         "Successfully logged in with Google.",
         [
-          { 
-            text: "OK", 
+          {
+            text: "OK",
             onPress: () => {
               // Navigate to home page after alert is closed
               setTimeout(() => {
@@ -110,7 +113,7 @@ const SignIn = () => {
       );
     } catch (error) {
       console.log('Google Sign-In Error:', error);
-      
+
       Alert.alert(
         "Google Sign-In Failed",
         "An error occurred during Google sign-in. Please try again.",
@@ -128,7 +131,7 @@ const SignIn = () => {
         <View style={styles.formContainer}>
           <Text style={styles.headerText}>Sign in</Text>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.button}
             onPress={() => router.push('/sign-up')}
             activeOpacity={0.7}>
@@ -154,19 +157,29 @@ const SignIn = () => {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholderTextColor="#666"
-              secureTextEntry={true}
-              value={password}
-              placeholder='Password'
-              autoComplete="password"
-              onChangeText={(text) => setPassword(text)}
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholderTextColor="#666"
+                secureTextEntry={!showPassword}
+                value={password}
+                placeholder='Password'
+                autoComplete="password"
+                onChangeText={(text) => setPassword(text)}
+              />
+              <TouchableOpacity
+                style={styles.eyeIconContainer}
+                onPress={() => setshowPassword(!showPassword)}>
+                <Image
+                  style={styles.eye}
+                  source={!showPassword ? icons.eyeHide : icons.eye}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <TouchableOpacity 
-            style={styles.continueButton} 
+          <TouchableOpacity
+            style={styles.continueButton}
             onPress={login}
             disabled={loading}>
             {loading ? (
@@ -183,7 +196,7 @@ const SignIn = () => {
           </View>
 
           {/* Modified Google Sign-In button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.googleButton}
             onPress={() => promptAsync()}
             disabled={loading}>
@@ -314,6 +327,34 @@ const styles = StyleSheet.create({
   logo: {
     width: '100%',
     height: 200,
+  },
+  button: {
+    // Adding style for the button that was missing from original
+    marginBottom: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  passwordInput: {
+    flex: 1,
+    height: 48,
+    color: 'white',
+    fontSize: 16,
+    padding: 8,
+  },
+  eyeIconContainer: {
+    position: 'absolute',
+    right: 8,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  eye: {
+    height: 20,
+    width: 20,
   },
 });
 
