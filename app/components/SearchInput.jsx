@@ -28,12 +28,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#333',
-    marginTop: 10,
+    marginTop: 0,
     position: 'relative',
     flex: 1,
+    paddingHorizontal:5,
+    marginHorizontal:5,
+    backgroundColor:'grey',
+    borderRadius:24
   },
   input: {
-    height: 48,
+    height: 40,
     color: 'white',
     fontSize: 16,
     padding: 8,
@@ -42,8 +46,8 @@ const styles = StyleSheet.create({
     paddingRight: 40, // make room for the icon
   },
   searchIcon: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     position: 'absolute',
     right: 8,
     

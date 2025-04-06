@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { FlatList } from 'react-native'; // Changed from react-native-web to react-native
@@ -17,27 +17,51 @@ const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const [items, setItems] = useState([]);
+  const [trendingVideos, setTrendingVideos] = useState([]);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Simulate a network request
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    // Refresh data
+    fetchVideos();
     setRefreshing(false);
   }
 
-  const [items, setItems] = useState([]);
-
-  useEffect(() => {
+  const fetchVideos = () => {
     axios.get('http://192.168.1.10:5000/api/videos/')
       .then(response => {
-       // console.log("Data fetched:", response.data.videos);
-      setItems(response.data.videos);
+      
+        setItems(response.data.videos);
+        
+        if (response.data.videos && response.data.videos.length > 0) {
+          // Sort by most recent (assuming there's a timestamp or id that indicates recency)
+          const sortedVideos = [...response.data.videos].sort((a, b) => {
+            // If you have a timestamp field, use that for sorting
+             return new Date(b.createdAt) - new Date(a.createdAt);
+          
+          });
+          
+        
+          const recentVideos = sortedVideos.slice(0, 3);
+          
+        
+          const formattedTrending = recentVideos.map((video, index) => ({
+            $id: video.id ? video.id.toString() : index.toString(),
+            imgUrl: video.imgUrl,
+            videoUrl: video.videoUrl
+          }));
+          
+          setTrendingVideos(formattedTrending);
+        }
       })
       .catch(error => {
         console.error("Error fetching data: ", error);
       });
+  };
+
+  useEffect(() => {
+    fetchVideos();
   }, []);
- 
 
   // Session Timeout Logic
   useEffect(() => {
@@ -50,33 +74,34 @@ const Home = () => {
           // Session expired
           await AsyncStorage.removeItem('loginTimestamp');
           await signOut(FIREBASE_AUTH);
-          router.replace('/sign-in'); // Redirect to sign-in screen
+          router.replace('/sign-in');
         }
       } catch (error) {
         console.error('Session timeout check failed:', error);
       }
     };
 
-    
-    
     const interval = setInterval(() => {
       checkSessionTimeout();
     }, 60000);
 
     return () => clearInterval(interval);
   }, []);
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id} // Use id as key instead of $id
+        keyExtractor={(item, index) =>
+          item.id ? item.id.toString() : index.toString()
+        }
         renderItem={({ item }) => (
-          <VideoCard 
-          videoName={item.videoName}
-          videoCreator={item.videoCreator}
-          imgUrl={item.imgUrl}
-
+          <VideoCard
+            videoName={item.videoName}
+            videoCreator={item.videoCreator}
+            imgUrl={item.imgUrl}
+            videoUrl={item.videoUrl}
+            videoCreatorPhoto={item.videoCreatorPhoto}
           />
         )}
         ListHeaderComponent={() => (
@@ -85,7 +110,6 @@ const Home = () => {
               <View>
                 <Text style={styles.welcomeText}>Welcome Back</Text>
                 <Text style={styles.titleText}>ShuttleMate</Text>
-                
               </View>
               <View>
                 <Image
@@ -101,24 +125,23 @@ const Home = () => {
               <Text style={styles.latestVideosText}>
                 Latest Videos
               </Text>
-              <Trending posts={[
-                {id: '1'}, 
-                {id: '2'}, 
-                {id: '3'}
-              ]} /> 
+
+              {trendingVideos.length > 0 && (
+                <Trending posts={trendingVideos} />
+              )}
             </View>
           </View>
         )}
         ListEmptyComponent={() => (
           <EmptyState
             title="No Videos Found"
-            subtitle="Please upload video" 
+            subtitle="Please upload video"
           />
         )}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh} 
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
         }
       />
@@ -130,15 +153,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0A0A1A',
-    padding: 16,
+    padding: 7,
   },
   welcomeText: {
-    color: '#888',
-    fontSize: 14,
+    color: '#fff',
+    fontSize: 18,
+
   },
   titleText: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
   },
   list: {
@@ -151,14 +175,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-    marginTop: 20,
+    marginTop: 40,
     padding: 10,
   },
   latestVideosText: {
-    fontSize: 18,
+    fontSize: 15,
     marginTop: 12,
-    color: '#f5f5f5',
+    color: 'grey',
     marginBottom: 12,
+    marginLeft:5
   },
 });
 

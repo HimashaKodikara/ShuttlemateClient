@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ResizeMode, Video } from "expo-av";
+import { useState, useRef } from "react";
+import { useVideoPlayer, VideoView } from "expo-video";
 import {
   View,
   Text,
@@ -7,24 +7,51 @@ import {
   Image,
   StyleSheet,
 } from "react-native";
+import playIc from '../../assets/icons/play.png';
+import Menu from '../../assets/icons/menu.png';
 
-import { icons } from "../../constants/icons.js";
+const VideoCard = ({ videoName, videoCreator, videoCreatorPhoto, imgUrl, videoUrl }) => {
+  const [showPlayer, setShowPlayer] = useState(false);
+  const playerRef = useRef(null);
 
-const VideoCard = ({ videoName, videoCreator, avatar, imgUrl, video }) => {
-  const [play, setPlay] = useState(false);
+  const player = useVideoPlayer(videoUrl, (player) => {
+    player.loop = false;
+    playerRef.current = player;
+  });
+
+  const handlePlay = () => {
+    setShowPlayer(true);
+    if (playerRef.current) {
+      playerRef.current.play();
+    }
+  };
+
+  // Handle video end
+  const handleVideoEnd = (status) => {
+    console.log("Video status update:", status);
+    if (status.didJustFinish) {
+      console.log("Video finished - showing thumbnail");
+      setShowPlayer(false);
+      
+      }
+      
+      // Show thumbnail again
+ 
+    
+  };
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={styles.avatarWrapper}>
             <Image
-              source={{ uri: avatar }}
+           source={{ uri: videoCreatorPhoto }}
               style={styles.avatar}
               resizeMode="cover"
             />
           </View>
-
           <View style={styles.textWrapper}>
             <Text style={styles.title} numberOfLines={1}>
               {videoName}
@@ -34,48 +61,39 @@ const VideoCard = ({ videoName, videoCreator, avatar, imgUrl, video }) => {
             </Text>
           </View>
         </View>
-
         <View style={styles.menuIconWrapper}>
-          <Image
-            source={{ uri: avatar }}
-            style={styles.menuIcon}
-            resizeMode="contain"
-          />
+          <Image source={Menu} style={styles.menuIcon} resizeMode="contain" />
         </View>
       </View>
 
-      {play ? (
-        <Video
-          source={{ uri: video }}
-          style={styles.video}
-          resizeMode={ResizeMode.CONTAIN}
-          useNativeControls
-          shouldPlay
-          onPlaybackStatusUpdate={(status) => {
-            if (status.didJustFinish) {
-              setPlay(false);
-            }
-          }}
-        />
-      ) : (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => setPlay(true)}
-          style={styles.thumbnailWrapper}
-        >
-          <Image
-            source={{ uri: imgUrl }}
-            style={styles.thumbnail}
-            resizeMode="cover"
-          />
-
-          {/* <Image
-            source={icons.play}
-            style={styles.playIcon}
-            resizeMode="contain"
-          /> */}
-        </TouchableOpacity>
-      )}
+      {/* Video or Thumbnail */}
+      <View style={styles.mediaContainer}>
+        {showPlayer ? (
+          <View style={styles.videoWrapper}>
+            <VideoView
+              player={player}
+              style={styles.video}
+              allowsFullscreen
+              allowsPictureInPicture
+              onPlaybackStatusUpdate={handleVideoEnd}
+              
+            />
+          </View>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handlePlay}
+            style={styles.thumbnailWrapper}
+          >
+            <Image
+              source={{ uri: imgUrl }}
+              style={styles.thumbnail}
+              resizeMode="cover"
+            />
+            <Image source={playIc} style={styles.playIcon} resizeMode="contain" />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -90,20 +108,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    width: "100%",
+    marginBottom: 12,
   },
   userInfo: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
   },
   avatarWrapper: {
     width: 46,
     height: 46,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#ccc", // Replace with your secondary color
+    borderColor: "#ccc",
     justifyContent: "center",
     alignItems: "center",
     padding: 2,
@@ -120,14 +138,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    fontSize: 14,
-    fontWeight: "600", // 'psemibold'
+    fontSize: 20,
+    fontWeight: "600",
     color: "white",
   },
   creator: {
     fontSize: 12,
     color: "#ccc",
-    fontWeight: "400", // 'pregular'
+    fontWeight: "400",
   },
   menuIconWrapper: {
     paddingTop: 8,
@@ -136,21 +154,27 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
   },
-  video: {
+  mediaContainer: {
     width: "100%",
-    marginTop: 12,
     height: 240,
     borderRadius: 16,
+    overflow: "hidden",
+  },
+  videoWrapper: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+  },
+  video: {
+    width: "100%",
+    height: "100%",
   },
   thumbnailWrapper: {
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    marginTop: 12,
-    height: 240,
-    borderRadius: 16,
-    overflow: "hidden",
+    height: "100%",
   },
   thumbnail: {
     width: "100%",

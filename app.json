@@ -17,11 +17,9 @@
       "supportsTablet": true
     },
     "android": {
-      
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-        
       },
       "package": "com.anonymous.shuttlemate"
     },
@@ -30,8 +28,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
-     
+      "expo-font",
+      "expo-video",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ]
     ],
     "extra": {
       "router": {
