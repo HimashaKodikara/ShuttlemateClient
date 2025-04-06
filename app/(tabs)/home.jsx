@@ -7,6 +7,13 @@ import SearchInput from '../components/SearchInput';
 import Trending from '../components/Trending';
 import EmptyState from '../components/EmptyState';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { signOut } from 'firebase/auth';
+import { FIREBASE_AUTH } from '../../firebaseconfig';
+import { router } from 'expo-router';
+import VideoCard from '../components/VideoCard';
+
+const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
@@ -23,29 +30,54 @@ const Home = () => {
   useEffect(() => {
     axios.get('http://192.168.1.10:5000/api/videos/')
       .then(response => {
-        console.log("Data fetched:", response.data.videos);
+       // console.log("Data fetched:", response.data.videos);
       setItems(response.data.videos);
       })
       .catch(error => {
         console.error("Error fetching data: ", error);
       });
   }, []);
-  // Sample data with proper key identifiers
-  const sampleData = [
-    { id: '1', title: 'Item 1' }, 
-    { id: '2', title: 'Item 2' }, 
-    { id: '3', title: 'Item 3' }, 
-    { id: '4', title: 'Item 4' }
-  ];
+ 
 
+  // Session Timeout Logic
+  useEffect(() => {
+    const checkSessionTimeout = async () => {
+      try {
+        const timestamp = await AsyncStorage.getItem('loginTimestamp');
+        const now = Date.now();
+
+        if (timestamp && now - parseInt(timestamp, 10) > SESSION_TIMEOUT) {
+          // Session expired
+          await AsyncStorage.removeItem('loginTimestamp');
+          await signOut(FIREBASE_AUTH);
+          router.replace('/sign-in'); // Redirect to sign-in screen
+        }
+      } catch (error) {
+        console.error('Session timeout check failed:', error);
+      }
+    };
+
+    
+    
+    const interval = setInterval(() => {
+      checkSessionTimeout();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+  
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={items}
         keyExtractor={(item) => item.id} // Use id as key instead of $id
         renderItem={({ item }) => (
-          <Text style={styles.list}>{item.videoName}</Text>
-          
+          <VideoCard 
+          videoName={item.videoName}
+          videoCreator={item.videoCreator}
+          imgUrl={item.imgUrl}
+
+          />
         )}
         ListHeaderComponent={() => (
           <View>

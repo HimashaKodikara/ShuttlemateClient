@@ -10,6 +10,10 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import icons from '../../constants/icons.js';
 import Toast from 'react-native-toast-message';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
+
 
 // Make sure to call this at the top level
 WebBrowser.maybeCompleteAuthSession();
@@ -21,6 +25,13 @@ const SignIn = () => {
   const [showPassword, setshowPassword] = useState(false);
   const auth = FIREBASE_AUTH;
 
+
+  useEffect(() => {
+    const setLoginTimestamp = async () => {
+      await AsyncStorage.setItem('loginTimestamp', Date.now().toString());
+    };
+    setLoginTimestamp();
+  }, []);
   // Set up Google OAuth request
   const [request, response, promptAsync] = Google.useAuthRequest({
     expoClientId: 'YOUR_EXPO_CLIENT_ID',
