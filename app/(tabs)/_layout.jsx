@@ -25,8 +25,11 @@ const TabsLayout = () => {
         tabBarInactiveTintColor:'#CDCDE0',
         marginTop:10,
         tabBarStyle:{
-          backgroundColor:'',
-          
+        
+          backgroundColor: "#161622",
+            borderTopWidth: 0,
+            borderTopColor: "#232533",
+            
           height:65,
          
         }
@@ -103,7 +106,8 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2
+    gap: 2,
+    
   },
   icon: {
     width: 24,

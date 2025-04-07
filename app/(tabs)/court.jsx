@@ -1,31 +1,52 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
 const Courts = () => {
-  const courts = [
-    {
-      id: '1',
-      name: 'Bambarandage Indoor Court',
-      location: 'Piliyanadala',
-      phone: '+94 76 720 6520',
-     // image: require('../assets/bambarandage-court.jpg')
-    },
-    {
-      id: '2',
-      name: 'Aspire Badminton',
-      location: 'Piliyanadala',
-      phone: '+94 76 837 3038',
-      //image: require('../assets/aspire-badminton.jpg')
-    },
-    {
-      id: '3',
-      name: 'Vitech Sports',
-      location: 'Malabe',
-      phone: '+94 77 123 4567',
-      //image: require('../assets/vitech-sports.jpg')
-    }
-  ];
+  const [court, setCourt] = useState([]);
+
+  const fetchCourts = () => {
+    axios.get('http://192.168.1.5:5000/api/courts/')
+      .then(response => {
+        setCourt(response.data.courts);
+      })
+      .catch(error => {
+        console.error("Error Fetching data", error);
+      });
+  };
+
+  useEffect(() => {
+    fetchCourts();
+  }, []);
+
+  // const openMaps = (location) => {
+  //   const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(location)}`;
+  //   Linking.openURL(url).catch(() => {
+  //     Linking.openURL("https://play.google.com/store/apps/details?id=com.google.android.apps.maps");
+  //     console.log(url);
+  //   });
+  // };
+
+  const openMaps = (latitude, longitude) => {
+    const url = `google.navigation:q=${latitude},${longitude}`;
+    
+    Linking.canOpenURL(url)
+      .then(supported => {
+        if (supported) {
+          return Linking.openURL(url);
+        } else {
+          // Fallback to web URL if native maps app isn't available
+          const webUrl = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+          return Linking.openURL(webUrl);
+        }
+      })
+      .catch(err => {
+        console.error('An error occurred', err);
+        // Ultimate fallback - open Play Store to download Maps
+        Linking.openURL("https://play.google.com/store/apps/details?id=com.google.android.apps.maps");
+      });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -38,21 +59,42 @@ const Courts = () => {
       </View>
 
       <ScrollView style={styles.scrollView}>
-        {courts.map((court) => (
-          <TouchableOpacity key={court.id} style={styles.courtCard}>
-            <Image source={court.image} style={styles.courtImage} />
+        {court.map((court) => (
+          <View key={court._id} style={styles.courtCard}>
+            <Image source={{ uri: court.CourtPhoto }} style={styles.courtImage} />
             <View style={styles.courtInfo}>
-              <Text style={styles.courtName}>{court.name}</Text>
-              <View style={styles.locationContainer}>
-                <Ionicons name="location-outline" size={16} color="#666" />
-                <Text style={styles.locationText}>{court.location}</Text>
+              <Text style={styles.courtName}>{court.CourtName}</Text>
+
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Ionicons name="location-outline" size={20} color="#666" />
+                  <Text style={styles.infoText}>{court.place}</Text>
+                </View>
+                <View style={styles.infoItem}>
+                  <Ionicons name="call-outline" size={20} color="#666" />
+                  <Text style={styles.infoText}>{court.Tel}</Text>
+                </View>
               </View>
-              <View style={styles.phoneContainer}>
-                <Ionicons name="call-outline" size={16} color="#666" />
-                <Text style={styles.phoneText}>{court.phone}</Text>
+
+              <View style={styles.infoContainer}>
+                <Ionicons name="cash-outline" size={20} color="#666" />
+                <Text style={styles.infoText}>RS: {court.Priceperhour} Per Hour</Text>
               </View>
+
+              <View style={styles.infoContainer}>
+                <Ionicons name="time-outline" size={20} color="#666" />
+                <Text style={styles.infoText}>{court.Openinghours}</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.navigateButton}
+                onPress={() => openMaps(6.905880,79.928961)} // Or use `${court.latitude},${court.longitude}` if available
+              >
+                <Ionicons name="navigate-outline" size={18} color="#fff" />
+                <Text style={styles.navigateText}>Navigate</Text>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -66,10 +108,10 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 20,
+    paddingTop: 35,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 16,
@@ -95,39 +137,59 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 16,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   courtImage: {
     width: '100%',
-    height: 140,
+    height: 150,
     resizeMode: 'cover',
   },
   courtInfo: {
-    padding: 12,
+    padding: 16,
   },
   courtName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 8,
   },
-  locationContainer: {
+  infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    flex: 1,
   },
-  locationText: {
-    marginLeft: 6,
+  infoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  infoText: {
+    marginLeft: 12,
     color: '#666',
     fontSize: 14,
   },
-  phoneContainer: {
+  navigateButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4A80F0',
+    borderRadius: 8,
+    paddingVertical: 10,
+    marginTop: 12,
   },
-  phoneText: {
-    marginLeft: 6,
-    color: '#666',
-    fontSize: 14,
+  navigateText: {
+    color: '#fff',
+    fontWeight: '600',
+    marginLeft: 8,
   },
 });
 

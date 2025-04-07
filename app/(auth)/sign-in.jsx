@@ -271,6 +271,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 8,
+    marginTop:50
   },
   newUserText: {
     fontSize: 14,

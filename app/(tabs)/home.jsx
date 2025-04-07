@@ -28,7 +28,8 @@ const Home = () => {
   }
 
   const fetchVideos = () => {
-    axios.get('http://192.168.1.10:5000/api/videos/')
+    axios.get('http://192.168.1.5:5000/api/videos/')
+   //axios.get('http://localhost:5000/api/videos/')
       .then(response => {
       
         setItems(response.data.videos);
