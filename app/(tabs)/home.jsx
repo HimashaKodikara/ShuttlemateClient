@@ -12,6 +12,7 @@ import { signOut } from 'firebase/auth';
 import { FIREBASE_AUTH } from '../../firebaseconfig';
 import { router } from 'expo-router';
 import VideoCard from '../components/VideoCard';
+import API_BASE_URL from '../../server/api.config';
 
 const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
 
@@ -28,7 +29,7 @@ const Home = () => {
   }
 
   const fetchVideos = () => {
-    axios.get('http://192.168.1.5:5000/api/videos/')
+    axios.get(`${API_BASE_URL}/videos/`)
    //axios.get('http://localhost:5000/api/videos/')
       .then(response => {
       

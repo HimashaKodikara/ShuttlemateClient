@@ -1,33 +1,27 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import API_BASE_URL from '../../server/api.config';
 
 const Coaches = () => {
-  const coaches = [
-    {
-      id: 1,
-      name: 'Ruchira Jayaruwan',
-      //image: require('../assets/images/coach1.jpg'),
-      specialties: ['Plyometrics', 'Mobility', 'Strength'],
-      contactNumber: '+94 70 123 4567',
-      levels: ['Beginners', 'Intermediate'],
-    },
-    {
-      id: 2,
-      name: 'Tharindu Ambegoda',
-     // image: require('../assets/images/coach2.jpg'),
-      specialties: ['Kettlebell', 'Cardio', 'Strength'],
-      contactNumber: '+94 77 887 4858',
-      levels: ['Intermediate', 'Professional'],
-    },
-    {
-      id: 3,
-      name: 'Bhagya Ranasinghe',
-     // image: require('../assets/images/coach3.jpg'),
-      specialties: ['Cardio', 'Recovery', 'Yoga'],
-      contactNumber: '+94 76 599 7554',
-      levels: ['Beginners'],
-    },
-  ];
+  const [coaches, setCoaches] = useState([]);
+
+  const fetchCoaches = () => {
+    axios.get(`${API_BASE_URL}/Coachers/`)
+      .then(response => {
+        // Change from response.data.coaches to response.data.coachers
+        setCoaches(response.data.coachers);
+       
+      })
+      .catch(error => {
+        console.error("Error Fetching data", error);
+      });
+  };
+
+  
+  useEffect(() => {
+    fetchCoaches();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -41,37 +35,39 @@ const Coaches = () => {
       </View>
       
       <ScrollView style={styles.coachList}>
-        {coaches.map((coach) => (
-          <View key={coach.id} style={styles.coachCard}>
+        {coaches && coaches.length > 0 ? coaches.map((coach) => (
+          <View key={coach._id} style={styles.coachCard}>
             <Image 
-              source={coach.image}
+              source={{ uri: coach.CoachPhoto }}
               style={styles.coachImage}
               //defaultSource={require('../assets/images/default-avatar.jpg')}
             />
             
             <View style={styles.coachInfo}>
-              <Text style={styles.coachName}>{coach.name}</Text>
+              <Text style={styles.coachName}>{coach.CoachName}</Text>
               
               <View style={styles.specialtiesContainer}>
-                {coach.specialties.map((specialty, index) => (
+                {coach.TrainingType && coach.TrainingType.map((specialty, index) => (
                   <Text key={index} style={styles.specialty}>
-                    {specialty}{index < coach.specialties.length - 1 ? ' | ' : ''}
+                    {specialty}{index < coach.TrainingType.length - 1 ? ' | ' : ''}
                   </Text>
                 ))}
               </View>
               
-              <Text style={styles.contactNumber}>{coach.contactNumber}</Text>
+              <Text style={styles.contactNumber}>{coach.Tel}</Text>
               
               <View style={styles.levelsContainer}>
-                {coach.levels.map((level, index) => (
+                {coach.TrainingAreas && coach.TrainingAreas.map((area, index) => (
                   <Text key={index} style={styles.level}>
-                    {level}{index < coach.levels.length - 1 ? ' | ' : ''}
+                    {area.CourtName}{index < coach.TrainingAreas.length - 1 ? ' | ' : ''}
                   </Text>
                 ))}
               </View>
             </View>
           </View>
-        ))}
+        )) : (
+          <Text style={styles.noCoaches}>No coaches available</Text>
+        )}
       </ScrollView>
     </View>
   );
@@ -80,14 +76,15 @@ const Coaches = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: '#141424',
     padding: 16,
   },
   heading: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 16,
+    marginTop:30
   },
   dropdownContainer: {
     marginBottom: 16,
@@ -96,13 +93,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#222',
+    backgroundColor: 'white',
     borderRadius: 8,
     padding: 12,
   },
   dropdownText: {
     color: '#888',
-    fontSize: 14,
+    fontSize: 16,
   },
   dropdownIcon: {
     color: '#888',
@@ -112,7 +109,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   coachCard: {
-    backgroundColor: '#222',
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -124,35 +121,44 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     marginRight: 16,
+    backgroundColor: '#333', // Placeholder background
   },
   coachInfo: {
     flex: 1,
   },
   coachName: {
-    color: '#fff',
+    color: 'black',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
   },
   specialtiesContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginBottom: 4,
   },
   specialty: {
-    color: '#aaa',
+    color: 'black',
     fontSize: 12,
   },
   contactNumber: {
-    color: '#aaa',
+    color: 'black',
     fontSize: 12,
     marginBottom: 4,
   },
   levelsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   level: {
-    color: '#aaa',
+    color: 'black',
     fontSize: 12,
+  },
+  noCoaches: {
+    color: '#888',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 32,
   },
 });
 

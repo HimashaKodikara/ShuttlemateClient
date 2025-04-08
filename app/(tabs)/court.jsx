@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-
+import API_BASE_URL from '../../server/api.config';
 const Courts = () => {
   const [court, setCourt] = useState([]);
 
   const fetchCourts = () => {
-    axios.get('http://192.168.1.5:5000/api/courts/')
+    axios.get(`${API_BASE_URL}/courts/`)
       .then(response => {
         setCourt(response.data.courts);
       })
