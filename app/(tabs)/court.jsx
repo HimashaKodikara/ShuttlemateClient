@@ -1,32 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
+
 const Courts = () => {
   const [court, setCourt] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchCourts = () => {
+    setLoading(true);
     axios.get(`${API_BASE_URL}/courts/`)
       .then(response => {
         setCourt(response.data.courts);
+        setLoading(false);
       })
       .catch(error => {
         console.error("Error Fetching data", error);
+        setError("Failed to load courts. Please try again.");
+        setLoading(false);
       });
   };
 
   useEffect(() => {
     fetchCourts();
   }, []);
-
-  // const openMaps = (location) => {
-  //   const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(location)}`;
-  //   Linking.openURL(url).catch(() => {
-  //     Linking.openURL("https://play.google.com/store/apps/details?id=com.google.android.apps.maps");
-  //     console.log(url);
-  //   });
-  // };
 
   const openMaps = (latitude, longitude) => {
     const url = `google.navigation:q=${latitude},${longitude}`;
@@ -48,54 +47,129 @@ const Courts = () => {
       });
   };
 
+  // Display loader while data is being fetched
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Courts</Text>
+          <TouchableOpacity style={styles.dropdown}>
+            <Text style={styles.dropdownText}>Select the area</Text>
+            <Ionicons name="chevron-down" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#4A80F0" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Display error state if there's an error
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Courts</Text>
+          <TouchableOpacity style={styles.dropdown}>
+            <Text style={styles.dropdownText}>Select the area</Text>
+            <Ionicons name="chevron-down" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchCourts}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Courts</Text>
-        <View style={styles.dropdown}>
+        <TouchableOpacity style={styles.dropdown}>
           <Text style={styles.dropdownText}>Select the area</Text>
           <Ionicons name="chevron-down" size={20} color="#fff" />
-        </View>
+        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {court.map((court) => (
-          <View key={court._id} style={styles.courtCard}>
-            <Image source={{ uri: court.CourtPhoto }} style={styles.courtImage} />
-            <View style={styles.courtInfo}>
-              <Text style={styles.courtName}>{court.CourtName}</Text>
-
-              <View style={styles.infoRow}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="location-outline" size={20} color="#666" />
-                  <Text style={styles.infoText}>{court.place}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="call-outline" size={20} color="#666" />
-                  <Text style={styles.infoText}>{court.Tel}</Text>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {court.length > 0 ? (
+          court.map((court) => (
+            <TouchableOpacity key={court._id} style={styles.courtCard} activeOpacity={0.92}>
+              <View style={styles.imageContainer}>
+                <Image source={{ uri: court.CourtPhoto }} style={styles.courtImage} />
+                <View style={styles.courtImageOverlay}>
+                  <View style={styles.priceBadge}>
+                    <Ionicons name="cash-outline" size={16} color="#fff" />
+                    <Text style={styles.priceText}>Rs. {court.Priceperhour}/hr</Text>
+                  </View>
                 </View>
               </View>
+              
+              <View style={styles.courtInfo}>
+                <Text style={styles.courtName}>{court.CourtName}</Text>
 
-              <View style={styles.infoContainer}>
-                <Ionicons name="cash-outline" size={20} color="#666" />
-                <Text style={styles.infoText}>RS: {court.Priceperhour} Per Hour</Text>
+                <View style={styles.infoSection}>
+                  <View style={styles.infoContainer}>
+                    <Ionicons name="location-outline" size={18} color="#4A80F0" />
+                    <Text style={styles.infoText}>{court.place}</Text>
+                  </View>
+
+                  <View style={styles.infoContainer}>
+                    <Ionicons name="call-outline" size={18} color="#4A80F0" />
+                    <Text style={styles.infoText}>{court.Tel}</Text>
+                  </View>
+
+                  <View style={styles.infoContainer}>
+                    <Ionicons name="time-outline" size={18} color="#4A80F0" />
+                    <Text style={styles.infoText}>{court.Openinghours}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.facilityContainer}>
+                  <Text style={styles.facilitiesTitle}>Facilities</Text>
+                  <View style={styles.facilitiesRow}>
+                    <View style={styles.facilityBadge}>
+                      <Ionicons name="water-outline" size={14} color="#fff" />
+                      <Text style={styles.facilityText}>Water</Text>
+                    </View>
+                    <View style={styles.facilityBadge}>
+                      <Ionicons name="car-outline" size={14} color="#fff" />
+                      <Text style={styles.facilityText}>Parking</Text>
+                    </View>
+                    <View style={styles.facilityBadge}>
+                      <Ionicons name="restaurant-outline" size={14} color="#fff" />
+                      <Text style={styles.facilityText}>Cafe</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <TouchableOpacity 
+                  style={styles.navigateButton}
+                  onPress={() => {
+                    if (court.Directions && court.Directions.length > 0) {
+                      openMaps(court.Directions[0].latitude, court.Directions[0].longitude);
+                    } else {
+                      console.warn("No directions available for this court.");
+                    }
+                  }}
+                >
+                  <Ionicons name="navigate-outline" size={18} color="#fff" />
+                  <Text style={styles.navigateText}>Navigate</Text>
+                </TouchableOpacity>
               </View>
-
-              <View style={styles.infoContainer}>
-                <Ionicons name="time-outline" size={20} color="#666" />
-                <Text style={styles.infoText}>{court.Openinghours}</Text>
-              </View>
-
-              <TouchableOpacity 
-                style={styles.navigateButton}
-                onPress={() => openMaps(6.905880,79.928961)} // Or use `${court.latitude},${court.longitude}` if available
-              >
-                <Ionicons name="navigate-outline" size={18} color="#fff" />
-                <Text style={styles.navigateText}>Navigate</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Ionicons name="basketball-outline" size={60} color="#666" />
+            <Text style={styles.noDataText}>No courts available</Text>
           </View>
-        ))}
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -104,17 +178,18 @@ const Courts = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141424',
+    backgroundColor: '#0F0F1A',
   },
   header: {
     padding: 16,
-    paddingTop: 35,
+    paddingTop: 50,
   },
   headerTitle: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 16,
+    letterSpacing: 0.5,
   },
   dropdown: {
     flexDirection: 'row',
@@ -122,74 +197,166 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#333',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   dropdownText: {
     color: '#999',
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
   },
   scrollView: {
     padding: 16,
   },
   courtCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A2E',
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 180,
   },
   courtImage: {
     width: '100%',
-    height: 150,
+    height: '100%',
     resizeMode: 'cover',
+  },
+  courtImageOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    padding: 12,
+  },
+  priceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(74, 128, 240, 0.9)',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  priceText: {
+    color: '#fff',
+    fontWeight: '700',
+    marginLeft: 4,
+    fontSize: 14,
   },
   courtInfo: {
     padding: 16,
   },
   courtName: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 12,
   },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  infoSection: {
+    marginBottom: 16,
   },
   infoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 6,
   },
   infoText: {
     marginLeft: 12,
-    color: '#666',
+    color: '#bbb',
     fontSize: 14,
+  },
+  facilityContainer: {
+    marginBottom: 16,
+  },
+  facilitiesTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  facilitiesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  facilityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  facilityText: {
+    color: '#fff',
+    fontSize: 12,
+    marginLeft: 4,
   },
   navigateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4A80F0',
-    borderRadius: 8,
-    paddingVertical: 10,
-    marginTop: 12,
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 8,
   },
   navigateText: {
     color: '#fff',
     fontWeight: '600',
     marginLeft: 8,
+    fontSize: 15,
+  },
+  // Loader styles
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // Error styles
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#4A80F0',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // No data styles
+  noDataContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  noDataText: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 16,
+    fontWeight: '500',
   },
 });
 

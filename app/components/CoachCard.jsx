@@ -1,99 +1,173 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import React from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  Easing,
+  Linking,
+} from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 
-const CoachCard = ({ coach }) => {
-  // Handle case where no coach data is provided
-  if (!coach) {
-    return null;
-  }
+
+const CoachCard = ({ coach, visible, onRequestClose }) => {
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.out(Easing.exp),
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      scaleAnim.setValue(0.8);
+      opacityAnim.setValue(0);
+    }
+  }, [visible]);
+
+  if (!coach) return null;
+  
+  // Function to handle phone number click
+  const handlePhoneCall = () => {
+    const phoneNumber = `tel:${coach.Tel}`;
+    Linking.openURL(phoneNumber).catch((err) => console.error('Error making the call:', err));
+  };
+
+  // Check if Courts are properly populated objects or just IDs
+  const hasPopulatedCourts = coach.Courts?.length > 0 && 
+    typeof coach.Courts[0] === 'object' && 
+    coach.Courts[0] !== null &&
+    coach.Courts[0].CourtName !== undefined;
 
   return (
-    <View style={styles.container}>
-      {/* Header with name and close button */}
-      <View style={styles.header}>
-        <Text style={styles.name}>{coach.CoachName}</Text>
-        <TouchableOpacity>
-          <Text style={styles.closeButton}>✕</Text>
-        </TouchableOpacity>
-      </View>
-      
-      {/* Profile Image */}
-      <View style={styles.imageContainer}>
-        <Image 
-          source={{ uri: coach.CoachPhoto }}
-          style={styles.profileImage}
-          // You can add a defaultSource here for fallback
-        />
-      </View>
-      
-      {/* Contact and Experience Info */}
-      <View style={styles.infoRow}>
-        <View style={styles.infoColumn}>
-          <Text style={styles.infoLabel}>Phone</Text>
-          <Text style={styles.infoText}>{coach.Tel}</Text>
-        </View>
-        <View style={[styles.infoColumn, styles.rightAligned]}>
-          <Text style={styles.infoLabel}>Coaching Experience</Text>
-          <Text style={styles.infoText}>{coach.Experience || '5 Years'}</Text>
-        </View>
-      </View>
-      
-      {/* Training Types */}
-      <View style={styles.section}>
-        <Text style={styles.infoLabel}>Training For</Text>
-        <View style={styles.specialtiesContainer}>
-          {coach.TrainingType && coach.TrainingType.map((specialty, index) => (
-            <Text key={index} style={styles.specialty}>
-              {specialty}{index < coach.TrainingType.length - 1 ? ' | ' : ''}
-            </Text>
-          ))}
-        </View>
-      </View>
-      
-      {/* Certificates */}
-      <View style={styles.section}>
-        <Text style={styles.infoLabel}>Certificates</Text>
-        {coach.Certificates ? 
-          coach.Certificates.map((certificate, index) => (
-            <Text key={index} style={styles.certificate}>{certificate}</Text>
-          )) : 
-          // Fallback certificates if not provided
-          ['Completed BWF Level I courses', 
-           'Completed SLB Basic Level',
-           'Completed SLB level One', 
-           'Completed SLB level Two'].map((cert, idx) => (
-            <Text key={idx} style={styles.certificate}>{cert}</Text>
-          ))
-        }
-      </View>
-      
-      {/* Training Areas/Places */}
-      <View style={styles.section}>
-        <Text style={styles.infoLabel}>Places</Text>
-        <View style={styles.placesContainer}>
-          {coach.TrainingAreas && coach.TrainingAreas.map((area, index) => (
-            <View key={index} style={styles.placeItem}>
-              <Text style={styles.placeLocation}>{area.Location || 'Location'}</Text>
-              <Text style={styles.placeCourt}>{area.CourtName}</Text>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onRequestClose}
+    >
+      <View style={styles.modalContainer}>
+        <Animated.View
+          style={[
+            styles.container,
+            {
+              transform: [{ scale: scaleAnim }],
+              opacity: opacityAnim,
+            },
+          ]}
+        >
+          <View style={styles.header}>
+            <Text style={styles.name}>{coach.CoachName}</Text>
+            <TouchableOpacity onPress={onRequestClose}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: coach.CoachPhoto }}
+              style={styles.profileImage}
+            />
+          </View>
+
+          <View style={styles.infoRow}>
+            <View style={styles.infoColumn}>
+              <Text style={styles.infoLabel}>Phone</Text>
+              {/* <TouchableOpacity onPress={handlePhoneCall} style={styles.phonecontainer}>
+                <Ionicons name="call-outline" size={20} color="#666" />
+                <Text style={styles.infoText}>{coach.Tel}</Text>
+              </TouchableOpacity> */}
+              <TouchableOpacity onPress={handlePhoneCall} style={styles.phonecontainer}>
+  <LottieView
+    source={require('../../assets/lottie/phone.json')} // Adjust the path to your Lottie file
+    autoPlay
+    loop
+    style={{ width: 24, height: 24 }}
+  />
+  <Text style={styles.infoText}>{coach.Tel}</Text>
+</TouchableOpacity>
             </View>
-          ))}
-        </View>
+            <View style={[styles.infoColumn, styles.rightAligned]}>
+              <Text style={styles.infoLabel}>Coaching Experience</Text>
+              <Text style={styles.infoText}>{coach.Experiance || '1'} Years</Text>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.infoLabel}>Training For</Text>
+            <View style={styles.specialtiesContainer}>
+              {coach.TrainingType?.map((specialty, index) => (
+                <Text key={index} style={styles.specialty}>
+                  {specialty}
+                  {index < coach.TrainingType.length - 1 ? ' | ' : ''}
+                </Text>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.infoLabel}>Certificates</Text>
+            {(coach.Certificates?.length ? coach.Certificates : 
+              coach.Certifications ? [coach.Certifications] : []
+            ).map((cert, idx) => (
+              <Text key={idx} style={styles.certificate}>{cert}</Text>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.infoLabel}>Places</Text>
+            <View style={styles.placesContainer}>
+              {hasPopulatedCourts ? (
+                coach.Courts.map((court, index) => (
+                  <View key={index} style={styles.placeItem}>
+                    <Text style={styles.placeLocation}>{court.place || 'Location'}</Text>
+                    <Text style={styles.placeCourt}>{court.CourtName}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.infoText}>No court information available</Text>
+              )}
+            </View>
+          </View>
+        </Animated.View>
       </View>
-    </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   container: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    width: '95%',
+    maxHeight: '90%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
   header: {
     flexDirection: 'row',
@@ -107,7 +181,7 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   closeButton: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#777',
   },
   imageContainer: {
@@ -118,7 +192,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#DDF', // Placeholder background color
+    backgroundColor: '#DDF',
   },
   infoRow: {
     flexDirection: 'row',
@@ -173,6 +247,11 @@ const styles = StyleSheet.create({
   placeCourt: {
     fontSize: 12,
     color: '#777',
+  },
+  phonecontainer:{
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap:5
   }
 });
 

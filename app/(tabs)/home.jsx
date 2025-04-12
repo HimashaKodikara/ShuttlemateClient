@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
-import { FlatList } from 'react-native'; // Changed from react-native-web to react-native
+import { FlatList } from 'react-native';
 import images from '../../constants/images';
 import SearchInput from '../components/SearchInput';
 import Trending from '../components/Trending';
@@ -20,6 +20,7 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
+  const [loading, setLoading] = useState(true); // Add loading state
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -29,10 +30,9 @@ const Home = () => {
   }
 
   const fetchVideos = () => {
+    setLoading(true); // Set loading to true before fetch begins
     axios.get(`${API_BASE_URL}/videos/`)
-   //axios.get('http://localhost:5000/api/videos/')
       .then(response => {
-      
         setItems(response.data.videos);
         
         if (response.data.videos && response.data.videos.length > 0) {
@@ -40,13 +40,10 @@ const Home = () => {
           const sortedVideos = [...response.data.videos].sort((a, b) => {
             // If you have a timestamp field, use that for sorting
              return new Date(b.createdAt) - new Date(a.createdAt);
-          
           });
           
-        
           const recentVideos = sortedVideos.slice(0, 3);
           
-        
           const formattedTrending = recentVideos.map((video, index) => ({
             $id: video.id ? video.id.toString() : index.toString(),
             imgUrl: video.imgUrl,
@@ -55,9 +52,11 @@ const Home = () => {
           
           setTrendingVideos(formattedTrending);
         }
+        setLoading(false); // Set loading to false after data is processed
       })
       .catch(error => {
         console.error("Error fetching data: ", error);
+        setLoading(false); // Set loading to false even if there's an error
       });
   };
 
@@ -90,6 +89,31 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Display loader if loading is true
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.welcomeText}>Welcome Back</Text>
+            <Text style={styles.titleText}>ShuttleMate</Text>
+          </View>
+          <View>
+            <Image
+              source={images.Logo}
+              resizeMode="contain"
+              style={{ width: 50, height: 50 }}
+            />
+          </View>
+        </View>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#4A90E2" />
+          
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -116,7 +140,7 @@ const Home = () => {
               <View>
                 <Image
                   source={images.Logo}
-                  resizeMode="contain" // Changed from resizeMethod to resizeMode
+                  resizeMode="contain"
                   style={{ width: 50, height: 50 }}
                 />
               </View>
@@ -160,7 +184,6 @@ const styles = StyleSheet.create({
   welcomeText: {
     color: '#fff',
     fontSize: 18,
-
   },
   titleText: {
     color: '#fff',
@@ -185,8 +208,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: 'grey',
     marginBottom: 12,
-    marginLeft:5
+    marginLeft: 5
   },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 12,
+    fontSize: 16,
+  }
 });
 
 export default Home;

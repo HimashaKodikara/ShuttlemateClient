@@ -1,76 +1,158 @@
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import React from 'react';
+// Shop.js - Fixed component
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import Icon from 'react-native-vector-icons/Feather';
+import axios from 'axios';
+import API_BASE_URL from '../../server/api.config';
+import ShopCard from '../components/ShopCard';
 
 const Shop = () => {
-  const shops = [
-    {
-      id: 1,
-      name: 'ELITESHUTTLER',
-      location: 'Dehradun',
-      phone: '+91 70 555 4555',
-      priceRange: '5000 - 100,000',
-     // image: require('../assets/eliteshuttler.png'),
-      brands: ['Yonex', 'Victor', 'Li-Ning', 'Apacs'],
-      brandLogos: [
-        // require('../assets/brands/yonex.png'),
-        // require('../assets/brands/victor.png'),
-        // require('../assets/brands/lining.png'),
-        // require('../assets/brands/apacs.png'),
-      ]
-    },
-    {
-      id: 2,
-      name: 'WINNERS SPORTS',
-      location: 'Bannerghatta',
-      phone: '+91 76 567 9555',
-      priceRange: '2000 - 45,000',
-      //image: require('../assets/winners-sports.png'),
-      brands: ['Yonex', 'Victor', 'Li-Ning'],
-      brandLogos: [
-        // require('../assets/brands/yonex.png'),
-        // require('../assets/brands/victor.png'),
-        // require('../assets/brands/lining.png'),
-      ]
-    }
-  ];
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedShop, setSelectedShop] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const fetchShops = () => {
+    setLoading(true);
+    axios.get(`${API_BASE_URL}/shops/`)
+      .then(response => {
+        setShops(response.data.shops);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error("Error Fetching data", error);
+        setError("Failed to load shops. Please try again.");
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchShops();
+  }, []);
+
+  const openModal = (shop) => {
+    setSelectedShop(shop);
+    setModalVisible(true);
+  }
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedShop(null);
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.header}>Shops</Text>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#4A80F0" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.header}>Shops</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchShops}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Shops</Text>
       
-      <ScrollView style={styles.shopsList}>
-        {shops.map((shop) => (
-          <TouchableOpacity key={shop.id} style={styles.shopCard}>
-            <Image source={shop.image} style={styles.shopImage} />
-            
-            <View style={styles.shopInfo}>
-              <Text style={styles.shopName}>{shop.name}</Text>
-              
-              <View style={styles.infoRow}>
-                <Icon name="map-pin" size={16} color="#666" />
-                <Text style={styles.infoText}>{shop.location}</Text>
+      <ScrollView style={styles.shopsList} showsVerticalScrollIndicator={false}>
+        {shops && shops.length > 0 ? (
+          shops.map((shop) => (
+            <TouchableOpacity 
+              key={shop._id} 
+              style={styles.shopCard}
+              activeOpacity={0.50}
+            >
+              <View style={styles.imageContainer}>
+                <Image 
+                  source={{ uri: shop.ShopPhoto }} 
+                  style={styles.shopImage} 
+                />
+                <View style={styles.imageOverlay}>
+                  <Text style={styles.shopName}>{shop.ShopName}</Text>
+                  <View style={styles.locationBadge}>
+                    <Icon name="map-pin" size={12} color="#fff" />
+                    <Text style={styles.locationText}>{shop.place}</Text>
+                  </View>
+                </View>
               </View>
               
-              <View style={styles.infoRow}>
-                <Icon name="phone" size={16} color="#666" />
-                <Text style={styles.infoText}>{shop.phone}</Text>
+              <View style={styles.shopInfo}>
+                <View style={styles.infoSection}>
+                  <View style={styles.infoRow}>
+                    <Icon name="phone" size={16} color="#4A80F0" />
+                    <Text style={styles.infoText}>{shop.Tel}</Text>
+                  </View>
+                  
+                  <View style={styles.infoRow}>
+                    <Icon name="globe" size={16} color="#4A80F0" />
+                    <Text style={styles.infoText}>{shop.website}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.divider} />
+                
+                <View>
+                  <Text style={styles.brandsLabel}>Available brands</Text>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    style={styles.brandsScroll}
+                    contentContainerStyle={styles.brandsScrollContent}
+                  >
+                    {shop.brands && shop.brands.map((brand, index) => (
+                      <View key={index} style={styles.brandContainer}>
+                        <Image 
+                          source={{ uri: brand.images }} 
+                          style={styles.brandLogo} 
+                        />
+                        <Text style={styles.brandName}>{brand.name}</Text>
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.viewDetailsButton} 
+                  onPress={() => openModal(shop)}
+                >
+                  <Text style={styles.viewDetailsText}>View Details</Text>
+                  <Icon name="chevron-right" size={16} color="#fff" />
+                </TouchableOpacity>
               </View>
-              
-              <Text style={styles.priceLabel}>Price Range (₹):</Text>
-              <Text style={styles.priceRange}>{shop.priceRange}</Text>
-              
-              <Text style={styles.brandsLabel}>Available brands:</Text>
-              <View style={styles.brandLogos}>
-                {shop.brandLogos.map((logo, index) => (
-                  <Image key={index} source={logo} style={styles.brandLogo} />
-                ))}
-              </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+            </TouchableOpacity>
+          ))
+        ) : (
+          <View style={styles.noShopsContainer}>
+            <Icon name="shopping-bag" size={50} color="#666" />
+            <Text style={styles.noShopsText}>No shops available</Text>
+          </View>
+        )}
       </ScrollView>
-    </View>
+      
+      {selectedShop && (
+        <ShopCard
+          visible={modalVisible}
+          onRequestClose={closeModal}
+          shop={selectedShop}
+        />
+      )}
+    </SafeAreaView>
   );
 };
 
@@ -81,65 +163,178 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   header: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: 'white',
-    marginBottom: 16,
+    marginBottom: 20,
+    marginTop: 40,
+    letterSpacing: 0.5,
   },
   shopsList: {
     flex: 1,
   },
   shopCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 16,
+    backgroundColor: '#1A1A2E',
+    borderRadius: 16,
+    marginBottom: 24,
     overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  imageContainer: {
+    position: 'relative',
+    height: 180,
   },
   shopImage: {
     width: '100%',
-    height: 150,
+    height: '100%',
     resizeMode: 'cover',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)', // Use solid color with opacity instead of gradient
+  },
+  shopName: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  locationText: {
+    color: 'white',
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: '500',
   },
   shopInfo: {
     padding: 16,
   },
-  shopName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+  infoSection: {
+    marginBottom: 8,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   infoText: {
-    marginLeft: 8,
-    color: '#666',
-  },
-  priceLabel: {
+    marginLeft: 10,
+    color: '#bbb',
     fontSize: 14,
-    color: '#666',
-    marginTop: 8,
   },
-  priceRange: {
-    fontSize: 15,
-    fontWeight: '500',
-    marginBottom: 8,
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginVertical: 12,
   },
   brandsLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 12,
+    fontWeight: '600',
   },
-  brandLogos: {
-    flexDirection: 'row',
-    gap: 8,
+  brandsScroll: {
+    marginBottom: 16,
+  },
+  brandsScrollContent: {
+    paddingRight: 16,
+  },
+  brandContainer: {
+    alignItems: 'center',
+    marginRight: 16,
   },
   brandLogo: {
-    width: 32,
-    height: 32,
+    width: 56,
+    height: 56,
     resizeMode: 'contain',
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    padding: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  brandName: {
+    fontSize: 12,
+    color: '#bbb',
+    marginTop: 6,
+    textAlign: 'center',
+    maxWidth: 70,
+  },
+  viewDetailsButton: {
+    backgroundColor: '#4A80F0',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewDetailsText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+    marginRight: 6,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#4A80F0',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  noShopsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  noShopsText: {
+    color: '#888',
+    fontSize: 16,
+    marginTop: 16,
+    fontWeight: '500',
   }
 });
 

@@ -1,74 +1,127 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator
+} from 'react-native';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
+import CoachCard from '../components/CoachCard';
 
 const Coaches = () => {
   const [coaches, setCoaches] = useState([]);
+  const [selectedCoach, setSelectedCoach] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchCoaches = () => {
-    axios.get(`${API_BASE_URL}/Coachers/`)
-      .then(response => {
-        // Change from response.data.coaches to response.data.coachers
+  const fetchCoaches = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/Coachers/`);
+      if (response.data.success) {
         setCoaches(response.data.coachers);
-       
-      })
-      .catch(error => {
-        console.error("Error Fetching data", error);
-      });
+      } else {
+        setError('Failed to fetch coaches');
+      }
+    } catch (error) {
+      console.error("Error fetching coaches:", error);
+      setError('An error occurred while fetching coaches');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  
   useEffect(() => {
     fetchCoaches();
   }, []);
 
+  const openModal = (coach) => {
+    setSelectedCoach(coach);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedCoach(null);
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={fetchCoaches}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Coaches</Text>
-      
+
       <View style={styles.dropdownContainer}>
         <TouchableOpacity style={styles.dropdown}>
           <Text style={styles.dropdownText}>Select the coach requirement type</Text>
           <Text style={styles.dropdownIcon}>▼</Text>
         </TouchableOpacity>
       </View>
-      
+
       <ScrollView style={styles.coachList}>
         {coaches && coaches.length > 0 ? coaches.map((coach) => (
-          <View key={coach._id} style={styles.coachCard}>
-            <Image 
-              source={{ uri: coach.CoachPhoto }}
-              style={styles.coachImage}
-              //defaultSource={require('../assets/images/default-avatar.jpg')}
-            />
-            
-            <View style={styles.coachInfo}>
-              <Text style={styles.coachName}>{coach.CoachName}</Text>
-              
-              <View style={styles.specialtiesContainer}>
-                {coach.TrainingType && coach.TrainingType.map((specialty, index) => (
-                  <Text key={index} style={styles.specialty}>
-                    {specialty}{index < coach.TrainingType.length - 1 ? ' | ' : ''}
-                  </Text>
-                ))}
-              </View>
-              
-              <Text style={styles.contactNumber}>{coach.Tel}</Text>
-              
-              <View style={styles.levelsContainer}>
-                {coach.TrainingAreas && coach.TrainingAreas.map((area, index) => (
-                  <Text key={index} style={styles.level}>
-                    {area.CourtName}{index < coach.TrainingAreas.length - 1 ? ' | ' : ''}
-                  </Text>
-                ))}
+          <TouchableOpacity key={coach._id} onPress={() => openModal(coach)}>
+            <View style={styles.coachCard}>
+              <Image 
+                source={{ uri: coach.CoachPhoto }}
+                style={styles.coachImage}
+              />
+              <View style={styles.coachInfo}>
+                <Text style={styles.coachName}>{coach.CoachName}</Text>
+                <View style={styles.specialtiesContainer}>
+                  {coach.TrainingType && coach.TrainingType.map((specialty, index) => (
+                    <Text key={index} style={styles.specialty}>
+                      {specialty}{index < coach.TrainingType.length - 1 ? ' | ' : ''}
+                    </Text>
+                  ))}
+                </View>
+                <Text style={styles.contactNumber}>{coach.Tel}</Text>
+                <View style={styles.levelsContainer}>
+                  {coach.Courts && coach.Courts.map((court, index) => (
+                    <Text key={index} style={styles.level}>
+                      {court.CourtName}{index < coach.Courts.length - 1 ? ' | ' : ''}
+                    </Text>
+                  ))}
+                </View>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
         )) : (
           <Text style={styles.noCoaches}>No coaches available</Text>
         )}
       </ScrollView>
+
+      {selectedCoach && (
+        <CoachCard
+          visible={modalVisible}
+          coach={selectedCoach}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={closeModal}
+        />
+      )}
     </View>
   );
 };
@@ -79,12 +132,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#141424',
     padding: 16,
   },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   heading: {
     fontSize: 30,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 16,
-    marginTop:30
+    marginTop: 30,
   },
   dropdownContainer: {
     marginBottom: 16,
@@ -109,25 +166,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   coachCard: {
-    backgroundColor: 'white',
+    backgroundColor: '#1A1A2E',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
+  
+    // Android shadow
+    elevation: 5,
+  
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
   },
+  
   coachImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
     marginRight: 16,
-    backgroundColor: '#333', // Placeholder background
+    backgroundColor: '#333',
   },
   coachInfo: {
     flex: 1,
   },
   coachName: {
-    color: 'black',
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
@@ -138,11 +205,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   specialty: {
-    color: 'black',
+    color: '#bbb',
     fontSize: 12,
   },
   contactNumber: {
-    color: 'black',
+    color: '#bbb',
     fontSize: 12,
     marginBottom: 4,
   },
@@ -151,7 +218,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   level: {
-    color: 'black',
+    color: '#bbb',
     fontSize: 12,
   },
   noCoaches: {
@@ -160,6 +227,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 32,
   },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  }
 });
 
 export default Coaches;
