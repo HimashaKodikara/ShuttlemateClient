@@ -11,6 +11,10 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import CoachCard from '../components/CoachCard';
+import Matches from '../components/Matches';
+import { Feather, MaterialIcons,Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
+
 
 const Coaches = () => {
   const [coaches, setCoaches] = useState([]);
@@ -18,6 +22,8 @@ const Coaches = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showMatches, setShowMatches] = useState(false);
+  
 
   const fetchCoaches = async () => {
     try {
@@ -48,6 +54,9 @@ const Coaches = () => {
   const closeModal = () => {
     setModalVisible(false);
     setSelectedCoach(null);
+  };
+  const toggleMatches = () => {
+    setShowMatches(!showMatches);
   };
 
   if (loading) {
@@ -111,6 +120,7 @@ const Coaches = () => {
         )) : (
           <Text style={styles.noCoaches}>No coaches available</Text>
         )}
+         
       </ScrollView>
 
       {selectedCoach && (
@@ -122,6 +132,27 @@ const Coaches = () => {
           onRequestClose={closeModal}
         />
       )}
+     <TouchableOpacity
+                  style={styles.matchesButton}
+                  onPress={toggleMatches}
+                  activeOpacity={0.7}
+                >
+                  <LottieView
+                    source={require('../../assets/lottie/calendar.json')}
+                    autoPlay
+                    loop
+                    style={{ width: 40, height: 40 }}
+                    colorFilters={[
+                      {
+                        keypath: "**", // This targets all elements in the animation
+                        color: "#FFFFFF" // White color
+                      }
+                    ]}
+                  />
+                </TouchableOpacity>
+      
+      {/* Matches component that shows when button is clicked */}
+      {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
     </View>
   );
 };
@@ -243,7 +274,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
-  }
+  },
+  matchesButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'white',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 1000,
+  },
 });
 
 export default Coaches;

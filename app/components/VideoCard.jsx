@@ -65,7 +65,7 @@ const VideoCard = ({ videoName, videoCreator, videoCreatorPhoto, imgUrl, videoUr
         <View style={styles.menuIconWrapper}>
           {/* <Image source={Menu} style={styles.menuIcon} resizeMode="contain" /> */}
            <LottieView
-              source={require('../../assets/lottie/heart.json')} // Adjust the path to your Lottie file
+              source={require('../../assets/lottie/reveal-loading.json')} // Adjust the path to your Lottie file
               autoPlay
               loop
               style={{ width: 50, height: 50 }}

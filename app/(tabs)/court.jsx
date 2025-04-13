@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+//import { Ionicons } from '@expo/vector-icons';
+import { Feather, MaterialIcons,Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
+import LottieView from 'lottie-react-native';
+import Matches from '../components/Matches';
+
 
 const Courts = () => {
   const [court, setCourt] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showMatches, setShowMatches] = useState(false);
 
   const fetchCourts = () => {
     setLoading(true);
@@ -29,7 +34,7 @@ const Courts = () => {
 
   const openMaps = (latitude, longitude) => {
     const url = `google.navigation:q=${latitude},${longitude}`;
-    
+
     Linking.canOpenURL(url)
       .then(supported => {
         if (supported) {
@@ -45,6 +50,10 @@ const Courts = () => {
         // Ultimate fallback - open Play Store to download Maps
         Linking.openURL("https://play.google.com/store/apps/details?id=com.google.android.apps.maps");
       });
+  };
+
+  const toggleMatches = () => {
+    setShowMatches(!showMatches);
   };
 
   // Display loader while data is being fetched
@@ -109,7 +118,7 @@ const Courts = () => {
                   </View>
                 </View>
               </View>
-              
+
               <View style={styles.courtInfo}>
                 <Text style={styles.courtName}>{court.CourtName}</Text>
 
@@ -148,7 +157,7 @@ const Courts = () => {
                   </View>
                 </View>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.navigateButton}
                   onPress={() => {
                     if (court.Directions && court.Directions.length > 0) {
@@ -158,6 +167,8 @@ const Courts = () => {
                     }
                   }}
                 >
+               
+                  
                   <Ionicons name="navigate-outline" size={18} color="#fff" />
                   <Text style={styles.navigateText}>Navigate</Text>
                 </TouchableOpacity>
@@ -171,6 +182,27 @@ const Courts = () => {
           </View>
         )}
       </ScrollView>
+     <TouchableOpacity
+                  style={styles.matchesButton}
+                  onPress={toggleMatches}
+                  activeOpacity={0.7}
+                >
+                  <LottieView
+                    source={require('../../assets/lottie/calendar.json')}
+                    autoPlay
+                    loop
+                    style={{ width: 40, height: 40 }}
+                    colorFilters={[
+                      {
+                        keypath: "**", // This targets all elements in the animation
+                        color: "#FFFFFF" // White color
+                      }
+                    ]}
+                  />
+                </TouchableOpacity>
+      
+      {/* Matches component that shows when button is clicked */}
+      {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
     </SafeAreaView>
   );
 };
@@ -357,6 +389,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     fontWeight: '500',
+  },
+  matchesButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'white',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 1000,
   },
 });
 

@@ -5,6 +5,9 @@ import Icon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import ShopCard from '../components/ShopCard';
+import Matches from '../components/Matches';
+import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
+import LottieView from 'lottie-react-native';
 
 const Shop = () => {
   const [shops, setShops] = useState([]);
@@ -12,6 +15,8 @@ const Shop = () => {
   const [error, setError] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showMatches, setShowMatches] = useState(false);
+
 
   const fetchShops = () => {
     setLoading(true);
@@ -40,6 +45,9 @@ const Shop = () => {
     setModalVisible(false);
     setSelectedShop(null);
   }
+  const toggleMatches = () => {
+    setShowMatches(!showMatches);
+  };
 
   if (loading) {
     return (
@@ -69,19 +77,19 @@ const Shop = () => {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Shops</Text>
-      
+
       <ScrollView style={styles.shopsList} showsVerticalScrollIndicator={false}>
         {shops && shops.length > 0 ? (
           shops.map((shop) => (
-            <TouchableOpacity 
-              key={shop._id} 
+            <TouchableOpacity
+              key={shop._id}
               style={styles.shopCard}
               activeOpacity={0.50}
             >
               <View style={styles.imageContainer}>
-                <Image 
-                  source={{ uri: shop.ShopPhoto }} 
-                  style={styles.shopImage} 
+                <Image
+                  source={{ uri: shop.ShopPhoto }}
+                  style={styles.shopImage}
                 />
                 <View style={styles.imageOverlay}>
                   <Text style={styles.shopName}>{shop.ShopName}</Text>
@@ -91,44 +99,44 @@ const Shop = () => {
                   </View>
                 </View>
               </View>
-              
+
               <View style={styles.shopInfo}>
                 <View style={styles.infoSection}>
                   <View style={styles.infoRow}>
                     <Icon name="phone" size={16} color="#4A80F0" />
                     <Text style={styles.infoText}>{shop.Tel}</Text>
                   </View>
-                  
+
                   <View style={styles.infoRow}>
                     <Icon name="globe" size={16} color="#4A80F0" />
                     <Text style={styles.infoText}>{shop.website}</Text>
                   </View>
                 </View>
-                
+
                 <View style={styles.divider} />
-                
+
                 <View>
                   <Text style={styles.brandsLabel}>Available brands</Text>
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false} 
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
                     style={styles.brandsScroll}
                     contentContainerStyle={styles.brandsScrollContent}
                   >
                     {shop.brands && shop.brands.map((brand, index) => (
                       <View key={index} style={styles.brandContainer}>
-                        <Image 
-                          source={{ uri: brand.images }} 
-                          style={styles.brandLogo} 
+                        <Image
+                          source={{ uri: brand.images }}
+                          style={styles.brandLogo}
                         />
                         <Text style={styles.brandName}>{brand.name}</Text>
                       </View>
                     ))}
                   </ScrollView>
                 </View>
-                
-                <TouchableOpacity 
-                  style={styles.viewDetailsButton} 
+
+                <TouchableOpacity
+                  style={styles.viewDetailsButton}
                   onPress={() => openModal(shop)}
                 >
                   <Text style={styles.viewDetailsText}>View Details</Text>
@@ -144,7 +152,7 @@ const Shop = () => {
           </View>
         )}
       </ScrollView>
-      
+
       {selectedShop && (
         <ShopCard
           visible={modalVisible}
@@ -152,6 +160,29 @@ const Shop = () => {
           shop={selectedShop}
         />
       )}
+
+      {/* <MaterialIcons name="event" size={24} color="white" /> */}
+      <TouchableOpacity
+        style={styles.matchesButton}
+        onPress={toggleMatches}
+        activeOpacity={0.7}
+      >
+        <LottieView
+          source={require('../../assets/lottie/calendar.json')}
+          autoPlay
+          loop
+          style={{ width: 40, height: 40 }}
+          colorFilters={[
+            {
+              keypath: "**", // This targets all elements in the animation
+              color: "#FFFFFF" // White color
+            }
+          ]}
+        />
+      </TouchableOpacity>
+
+      {/* Matches component that shows when button is clicked */}
+      {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
     </SafeAreaView>
   );
 };
@@ -335,7 +366,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 16,
     fontWeight: '500',
-  }
+  },
+  matchesButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'white',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 1000,
+  },
 });
 
 export default Shop;

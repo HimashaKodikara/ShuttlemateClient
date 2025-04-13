@@ -14,16 +14,10 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
         { name: 'Shuttlecocks', priceRange: '1,200 - 8,000' },
     ];
 
-    const brands = [
-        { name: 'Yonex', color: '#4AAF47' },
-        { name: 'Victor', color: '#2D368E' },
-        { name: 'Babolat', color: '#7432D0' },
-        { name: 'Li-Ning', color: '#E32A19' },
-    ];
 
     const handlePhoneCall = () => {
         // Use shop data if available, otherwise use default
-        const phoneNumber = shop?.Tel ;
+        const phoneNumber = shop?.Tel;
         Linking.openURL(`tel:${phoneNumber}`);
     };
 
@@ -35,7 +29,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
 
     const handleShopNow = () => {
         // Handle shop now action
-    
+
     };
 
     return (
@@ -83,6 +77,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                                 source={require('../../assets/lottie/web.json')} // Adjust the path to your Lottie file
                                 autoPlay
                                 loop
+                                
                                 style={styles.iconPlaceholder}
                             />
                             <Text style={styles.contactText}>{shop?.website || 'No website'}</Text>
@@ -95,28 +90,29 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                             <Text style={styles.tableHeaderText}>Equipment</Text>
                             <Text style={styles.tableHeaderText}>Price Range(Rs)</Text>
                         </View>
-                        {equipment.map((item, index) => (
+                        {shop?.categories && shop.categories.map((item, index) => (
                             <View key={index} style={styles.tableRow}>
-                                <Text style={styles.tableCell}>{item.name}</Text>
+                                <Text style={styles.tableCell}>{item.categoryName}</Text>
                                 <Text style={styles.tableCell}>{item.priceRange}</Text>
                             </View>
                         ))}
+
                     </View>
 
                     {/* Available Brands */}
                     <View style={styles.brandsSection}>
                         <Text style={styles.brandsTitle}>Available brands</Text>
-                        <ScrollView 
-                            horizontal 
-                            showsHorizontalScrollIndicator={false} 
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
                             style={styles.brandsScroll}
                             contentContainerStyle={styles.brandsScrollContent}
                         >
                             {shop?.brands && shop.brands.map((brand, index) => (
                                 <View key={index} style={styles.brandContainer}>
-                                    <Image 
-                                        source={{ uri: brand.images }} 
-                                        style={styles.brandLogo} 
+                                    <Image
+                                        source={{ uri: brand.images }}
+                                        style={styles.brandLogo}
                                     />
                                     <Text style={styles.brandName}>{brand.name}</Text>
                                 </View>

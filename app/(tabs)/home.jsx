@@ -13,6 +13,8 @@ import { FIREBASE_AUTH } from '../../firebaseconfig';
 import { router } from 'expo-router';
 import VideoCard from '../components/VideoCard';
 import API_BASE_URL from '../../server/api.config';
+import Matches from '../components/Matches';
+import LottieView from 'lottie-react-native';
 
 const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
 
@@ -20,7 +22,8 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
-  const [loading, setLoading] = useState(true); // Add loading state
+  const [loading, setLoading] = useState(true);
+  const [showMatches, setShowMatches] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -30,7 +33,7 @@ const Home = () => {
   }
 
   const fetchVideos = () => {
-    setLoading(true); // Set loading to true before fetch begins
+    setLoading(true);
     axios.get(`${API_BASE_URL}/videos/`)
       .then(response => {
         setItems(response.data.videos);
@@ -52,11 +55,11 @@ const Home = () => {
           
           setTrendingVideos(formattedTrending);
         }
-        setLoading(false); // Set loading to false after data is processed
+        setLoading(false);
       })
       .catch(error => {
         console.error("Error fetching data: ", error);
-        setLoading(false); // Set loading to false even if there's an error
+        setLoading(false);
       });
   };
 
@@ -89,6 +92,10 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const toggleMatches = () => {
+    setShowMatches(!showMatches);
+  };
+
   // Display loader if loading is true
   if (loading) {
     return (
@@ -108,7 +115,6 @@ const Home = () => {
         </View>
         <View style={styles.loaderContainer}>
           <ActivityIndicator size="large" color="#4A90E2" />
-          
         </View>
       </SafeAreaView>
     );
@@ -171,6 +177,28 @@ const Home = () => {
           />
         }
       />
+      
+      {/* Floating button to show Matches */}
+      <TouchableOpacity
+             style={styles.matchesButton}
+             onPress={toggleMatches}
+             activeOpacity={0.7}
+           >
+             <LottieView
+               source={require('../../assets/lottie/calendar.json')}
+               autoPlay
+               loop
+               style={{ width: 40, height: 40 }}
+               colorFilters={[
+                 {
+                   keypath: "**", // This targets all elements in the animation
+                   color: "#FFFFFF" // White color
+                 }
+               ]}
+             />
+           </TouchableOpacity>
+      {/* Matches component that shows when button is clicked */}
+      {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
     </SafeAreaView>
   );
 };
@@ -219,7 +247,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginTop: 12,
     fontSize: 16,
-  }
+  },
+  matchesButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'white',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 1000,
+  },
 });
 
 export default Home;
