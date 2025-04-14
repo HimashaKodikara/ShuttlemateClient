@@ -163,6 +163,8 @@ const styles = StyleSheet.create({
         height: 24,
         justifyContent: 'center',
         alignItems: 'center',
+        backgroundColor:'white',
+        padding:1
     },
     closeButton: {
         color: 'black',

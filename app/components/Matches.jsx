@@ -1,8 +1,15 @@
-import { View, Text, TouchableOpacity, Image, ScrollView, Animated, Dimensions, StyleSheet } from 'react-native';
-import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, Animated, Dimensions, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
+import axios from 'axios';
+import API_BASE_URL from '../../server/api.config';
+import { Linking } from 'react-native';
 
 const Matches = ({ visible = true, onClose }) => {
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const currentDate = new Date();
   const day = currentDate.getDate();
   const month = currentDate.toLocaleString('default', { month: 'short' });
@@ -44,43 +51,67 @@ const Matches = ({ visible = true, onClose }) => {
           duration: 300,
           useNativeDriver: true,
         })
-      ]).start(() => {
-        // Optional callback when animation completes
-      });
+      ]).start();
     }
   }, [visible]);
 
+  // Fetch matches data from API
+  useEffect(() => {
+    const fetchMatches = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${API_BASE_URL}/matches/`);
+  
+        if (response.data.success) {
+          const currentDate = new Date();
+  
+          const filteredAndSortedMatches = response.data.matches
+            .filter(match => {
+              const endDate = match.EndDate ? new Date(match.EndDate) : null;
+              // If endDate exists, compare it with currentDate
+              return !endDate || endDate >= currentDate;
+            })
+            .sort((a, b) => new Date(a.StartDate) - new Date(b.StartDate));
+  
+          setMatches(filteredAndSortedMatches);
+        } else {
+          setError('Failed to fetch matches');
+        }
+      } catch (err) {
+        console.error('Error fetching matches:', err);
+        setError('Network error. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    if (visible) {
+      fetchMatches();
+    }
+  }, [visible]);
+  
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [Dimensions.get('window').height, 0]
   });
   
-  const events = [
-    {
-      id: 1,
-      date: '21 March 2025',
-      title: 'UMISF 2025',
-      description: '31ST OF MARCH\n30TH OF MARCH',
-      note: 'APPLICATIONS WILL OPENING SOON',
-      color: '#f5a623',
-      buttonText: 'Register'
-    },
-    {
-      id: 2,
-      date: '31 March 2025',
-      title: 'K-Galic Tournament',
-      buttonText: 'Register'
-    },
-    {
-      id: 3,
-      date: '15 April 2025',
-      title: 'ALL ISLAND NOVICES SINGLES BADMINTON TOURNAMENT 2025',
-      description: 'STAY TUNED',
-      note: 'DATE: 15TH\nVENUE: MAIN HALL\nTIME: 08:00 AM',
-      color: '#1e3a8a',
-      buttonText: 'Coming Soon'
+  // Helper function to determine card color based on match name
+  const getCardColor = (matchName) => {
+    if (matchName.includes('BADMINTON') || matchName.includes('Badminton')) {
+      return '#1e3a8a';
+    } else if (matchName.includes('UMISF')) {
+      return '#f5a623';
+    } else {
+      return '#1e1e24';
     }
-  ];
+  };
+
+  // Format date string to display properly
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return `${date.getDate()} ${date.toLocaleString('default', { month: 'long' })} ${date.getFullYear()}`;
+  };
 
   // If not visible and animation is complete, don't render
   if (!visible && slideAnim._value === 0) return null;
@@ -138,7 +169,9 @@ const Matches = ({ visible = true, onClose }) => {
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={{ fontSize: 36, fontWeight: 'bold', color: 'white' }}>{day}</Text>
                   <View style={{ marginLeft: 8 }}>
-                    <Text style={{ color: 'gray', fontSize: 12 }}>WED</Text>
+                    <Text style={{ color: 'gray', fontSize: 12 }}>
+                      {currentDate.toLocaleString('default', { weekday: 'short' }).toUpperCase()}
+                    </Text>
                     <Text style={{ color: 'white', fontSize: 14 }}>{month} {year}</Text>
                   </View>
                 </View>
@@ -148,102 +181,134 @@ const Matches = ({ visible = true, onClose }) => {
               </View>
             </View>
 
-            {/* Timeline and Events */}
-            <View>
-              {events.map((event, index) => (
-                <View key={event.id} style={{ marginBottom: 20 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                    {/* Timeline */}
-                    <View style={{ alignItems: 'center', width: 24, marginRight: 12 }}>
-                      <View style={styles.timelineDot} />
-                      {index < events.length - 1 && (
-                        <View style={[
-                          styles.timelineLine, 
-                          { height: index === 0 ? 120 : 100 }
-                        ]} />
-                      )}
-                    </View>
-
-                    {/* Event Details */}
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: 'white', marginBottom: 8 }}>{event.date}</Text>
-                      
-                      {event.id === 2 ? (
-                        <View style={styles.simpleEventCard}>
-                          <Text style={{ color: 'white', fontWeight: '500' }}>{event.title}</Text>
-                          <TouchableOpacity style={styles.greenButton}>
-                            <Text style={{ color: '#121212', fontWeight: '500' }}>{event.buttonText}</Text>
-                          </TouchableOpacity>
-                        </View>
-                      ) : (
-                        <View style={[
-                          styles.coloredEventCard,
-                          { backgroundColor: event.color || '#1e1e24' }
-                        ]}>
-                          {event.id === 3 && (
-                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-                              <View style={styles.badmintonHeader}>
-                                <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
-                                  {event.title}
-                                </Text>
-                              </View>
-                            </View>
+            {/* Loading, Error, or Events */}
+            {loading ? (
+              <View style={styles.loaderContainer}>
+                <ActivityIndicator size="large" color="#3b82f6" />
+                <Text style={styles.loaderText}>Loading matches...</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <MaterialIcons name="error-outline" size={40} color="#d32f2f" />
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity 
+                  style={styles.retryButton}
+                  onPress={() => {
+                    setLoading(true);
+                    setError(null);
+                    // Re-fetch data
+                    axios.get(`${API_BASE_URL}/matches`)
+                      .then(response => {
+                        if (response.data.success) {
+                          setMatches(response.data.matches);
+                        } else {
+                          setError('Failed to fetch matches');
+                        }
+                      })
+                      .catch(err => {
+                        console.error('Error fetching matches:', err);
+                        setError('Network error. Please try again.');
+                      })
+                      .finally(() => setLoading(false));
+                  }}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : matches.length === 0 ? (
+              <View style={styles.noMatchesContainer}>
+                <MaterialIcons name="event-busy" size={40} color="#888" />
+                <Text style={styles.noMatchesText}>No upcoming matches found</Text>
+              </View>
+            ) : (
+              <View>
+                {matches.map((match, index) => {
+                  const cardColor = getCardColor(match.MatchName);
+                  const isBadminton = match.MatchName.includes('BADMINTON') || match.MatchName.includes('Badminton');
+                  const isUMISF = match.MatchName.includes('UMISF');
+                  
+                  return (
+                    <View key={match._id || index} style={{ marginBottom: 20 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                        {/* Timeline */}
+                        <View style={{ alignItems: 'center', width: 24, marginRight: 12 }}>
+                          <View style={styles.timelineDot} />
+                          {index < matches.length - 1 && (
+                            <View style={[
+                              styles.timelineLine, 
+                              { height: 120 }
+                            ]} />
                           )}
+                        </View>
+
+                        {/* Event Details */}
+                        <View style={{ flex: 1 }}>
+                          {/* Always display formatted start date */}
+                          <Text style={styles.dateText}>{formatDate(match.StartDate)}</Text>
                           
-                          <View style={{ 
-                            flexDirection: 'row', 
-                            justifyContent: 'space-between',
-                            marginTop: event.id === 3 ? 50 : 0
-                          }}>
-                            <View style={{ flex: 1 }}>
-                              {event.id !== 3 && (
-                                <Text style={styles.eventTitle}>
-                                  {event.title}
-                                </Text>
+                          <View style={[
+                            styles.matchCard,
+                            { backgroundColor: cardColor }
+                          ]}>
+                          <View style={styles.photoContainer}>
+                              {match.MatchPhoto ? (
+                                <Image 
+                                  source={{ uri: match.MatchPhoto }} 
+                                  style={styles.matchPhoto}
+                                  resizeMode="cover"
+                                />
+                              ) : (
+                                <View style={styles.placeholderPhoto}>
+                                  <MaterialIcons name="image-not-supported" size={24} color="#999" />
+                                </View>
                               )}
+                            </View>
+                            {/* Match Name - Always displayed prominently */}
+                            <Text style={styles.matchName}>
+                              {match.MatchName || 'Unnamed Match'}
+                            </Text>
+                            
+                            {/* Date information */}
+                            <View style={styles.dateContainer}>
+                              <View style={styles.dateRow}>
+                                <MaterialIcons name="event" size={16} color="white" />
+                                <Text style={styles.dateLabel}>Open: </Text>
+                                <Text style={styles.dateValue}>{formatDate(match.StartDate)}</Text>
+                              </View>
                               
-                              {event.description && (
-                                <Text style={{ 
-                                  color: 'white', 
-                                  marginBottom: 8,
-                                  fontWeight: event.id === 1 ? 'bold' : 'normal'
-                                }}>
-                                  {event.description}
-                                </Text>
-                              )}
-                              
-                              {event.note && (
-                                <Text style={{ color: 'white', fontSize: 12, opacity: 0.8 }}>
-                                  {event.note}
-                                </Text>
-                              )}
-                              
-                              {event.id === 1 && (
-                                <TouchableOpacity style={styles.redButton}>
-                                  <Text style={{ color: 'white', fontWeight: '500' }}>{event.buttonText}</Text>
-                                </TouchableOpacity>
+                              {match.EndDate && (
+                                <View style={styles.dateRow}>
+                                  <MaterialIcons name="event" size={16} color="white" />
+                                  <Text style={styles.dateLabel}>Close: </Text>
+                                  <Text style={styles.dateValue}>{formatDate(match.EndDate)}</Text>
+                                </View>
                               )}
                             </View>
                             
-                            {event.image && event.id === 1 && (
-                              <View style={{ width: 80, height: 100, position: 'absolute', right: 0, bottom: 0 }}>
-                                <View style={{ width: 80, height: 100, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 4 }} />
-                              </View>
-                            )}
+                            {/* Photo section - Always displayed if available */}
                             
-                            {event.image && event.id === 3 && (
-                              <View style={{ flexDirection: 'row', marginTop: 16, justifyContent: 'center' }}>
-                                <View style={{ width: 120, height: 80, backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: 4 }} />
-                              </View>
+
+                            {/* Register button */}
+                            {match.Weblink && (
+                              <TouchableOpacity 
+                                style={isUMISF ? styles.redButton : styles.greenButton}
+                                onPress={() => {
+                                  Linking.openURL(match.Weblink).catch(err => {
+                                    console.error('Error opening URL:', err);
+                                  });
+                                }}
+                              >
+                                <Text style={{ color: isUMISF ? 'white' : '#121212', fontWeight: '500' }}>Register</Text>
+                              </TouchableOpacity>
                             )}
                           </View>
                         </View>
-                      )}
+                      </View>
                     </View>
-                  </View>
-                </View>
-              ))}
-            </View>
+                  );
+                })}
+              </View>
+            )}
           </View>
         </ScrollView>
       </Animated.View>
@@ -314,45 +379,117 @@ const styles = StyleSheet.create({
     backgroundColor: '#3b82f6',
     opacity: 0.5,
   },
-  simpleEventCard: {
-    backgroundColor: '#1e1e24',
-    borderRadius: 12,
-    padding: 16,
+  dateText: {
+    color: 'white',
     marginBottom: 8,
+    fontWeight: '500',
   },
-  coloredEventCard: {
+  matchCard: {
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
     overflow: 'hidden',
   },
-  badmintonHeader: {
-    backgroundColor: '#0f2362',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  eventTitle: {
+  matchName: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 8,
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  dateContainer: {
+    marginVertical: 8,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  dateLabel: {
+    color: 'white',
+    marginLeft: 4,
+    opacity: 0.9,
+    fontWeight: '500',
+  },
+  dateValue: {
+    color: 'white',
+    opacity: 0.9,
+  },
+  photoContainer: {
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  matchPhoto: {
+    width: '100%',
+    height: 150,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  placeholderPhoto: {
+    width: '100%',
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   greenButton: {
     backgroundColor: '#4ade80',
     borderRadius: 8,
     padding: 8,
     alignItems: 'center',
-    marginTop: 12,
-    width: 100,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
   },
   redButton: {
     backgroundColor: '#d32f2f',
     borderRadius: 8,
     padding: 8,
     alignItems: 'center',
-    marginTop: 12,
-    width: 100,
+    marginTop: 10,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
   },
+  loaderContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  loaderText: {
+    color: 'white',
+    marginTop: 12,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  errorText: {
+    color: 'white',
+    marginTop: 12,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: '500',
+  },
+  noMatchesContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+  },
+  noMatchesText: {
+    color: 'white',
+    marginTop: 12,
+    textAlign: 'center',
+  }
 });
 
 export default Matches;
