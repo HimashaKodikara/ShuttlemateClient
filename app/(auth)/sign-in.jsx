@@ -195,7 +195,7 @@ const SignIn = () => {
                 onPress={() => setshowPassword(!showPassword)}>
                 <Image
                   style={styles.eye}
-                  source={!showPassword ? icons.eyeHide : icons.eye}
+                  source={!showPassword ? icons.eye : icons.eyeHide}
                 />
               </TouchableOpacity>
             </View>

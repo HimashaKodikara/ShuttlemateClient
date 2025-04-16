@@ -13,7 +13,7 @@ import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import shop from "../assets/icons/shop.png";
 import GoogleIcon from "../assets/icons/google.png";
-
+import back from "../assets/icons/back.png";
 export default {
   play,
   bookmark,
@@ -29,5 +29,6 @@ export default {
   eyeHide,
   eye,
   shop,
-  GoogleIcon
+  GoogleIcon,
+  back
 };

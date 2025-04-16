@@ -1,6 +1,6 @@
 // Shop.js - Fixed component
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Icon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
@@ -8,6 +8,7 @@ import ShopCard from '../components/ShopCard';
 import Matches from '../components/Matches';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Shop = () => {
   const [shops, setShops] = useState([]);
@@ -16,7 +17,6 @@ const Shop = () => {
   const [selectedShop, setSelectedShop] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [showMatches, setShowMatches] = useState(false);
-
 
   const fetchShops = () => {
     setLoading(true);
@@ -36,6 +36,19 @@ const Shop = () => {
     fetchShops();
   }, []);
 
+
+  useFocusEffect(
+    useCallback(() => {
+     
+      setModalVisible(false);
+      setSelectedShop(null);
+      
+      return () => {
+    
+      };
+    }, [])
+  );
+
   const openModal = (shop) => {
     setSelectedShop(shop);
     setModalVisible(true);
@@ -45,6 +58,7 @@ const Shop = () => {
     setModalVisible(false);
     setSelectedShop(null);
   }
+  
   const toggleMatches = () => {
     setShowMatches(!showMatches);
   };
@@ -153,15 +167,13 @@ const Shop = () => {
         )}
       </ScrollView>
 
-      {selectedShop && (
-        <ShopCard
-          visible={modalVisible}
-          onRequestClose={closeModal}
-          shop={selectedShop}
-        />
-      )}
+      {/* ShopCard will now open correctly even after navigation */}
+      <ShopCard
+        visible={modalVisible}
+        onRequestClose={closeModal}
+        shop={selectedShop}
+      />
 
-      {/* <MaterialIcons name="event" size={24} color="white" /> */}
       <TouchableOpacity
         style={styles.matchesButton}
         onPress={toggleMatches}
@@ -174,8 +186,8 @@ const Shop = () => {
           style={{ width: 40, height: 40 }}
           colorFilters={[
             {
-              keypath: "**", // This targets all elements in the animation
-              color: "#FFFFFF" // White color
+              keypath: "**", 
+              color: "#FFFFFF" 
             }
           ]}
         />

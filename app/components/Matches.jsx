@@ -98,9 +98,9 @@ const Matches = ({ visible = true, onClose }) => {
   // Helper function to determine card color based on match name
   const getCardColor = (matchName) => {
     if (matchName.includes('BADMINTON') || matchName.includes('Badminton')) {
-      return '#1e3a8a';
+      return '#1e1e24';
     } else if (matchName.includes('UMISF')) {
-      return '#f5a623';
+      return '#1e1e24';
     } else {
       return '#1e1e24';
     }
@@ -233,10 +233,10 @@ const Matches = ({ visible = true, onClose }) => {
                         {/* Timeline */}
                         <View style={{ alignItems: 'center', width: 24, marginRight: 12 }}>
                           <View style={styles.timelineDot} />
-                          {index < matches.length - 1 && (
+                          {index < matches.length - 0 && (
                             <View style={[
                               styles.timelineLine, 
-                              { height: 120 }
+                              { height: 300 }
                             ]} />
                           )}
                         </View>
@@ -265,7 +265,7 @@ const Matches = ({ visible = true, onClose }) => {
                             </View>
                             {/* Match Name - Always displayed prominently */}
                             <Text style={styles.matchName}>
-                              {match.MatchName || 'Unnamed Match'}
+                              {match.MatchName }
                             </Text>
                             
                             {/* Date information */}
@@ -291,14 +291,14 @@ const Matches = ({ visible = true, onClose }) => {
                             {/* Register button */}
                             {match.Weblink && (
                               <TouchableOpacity 
-                                style={isUMISF ? styles.redButton : styles.greenButton}
+                                style={isUMISF ? styles.greenButton : styles.greenButton}
                                 onPress={() => {
                                   Linking.openURL(match.Weblink).catch(err => {
                                     console.error('Error opening URL:', err);
                                   });
                                 }}
                               >
-                                <Text style={{ color: isUMISF ? 'white' : '#121212', fontWeight: '500' }}>Register</Text>
+                                <Text style={{  fontWeight: '500' }}>Register</Text>
                               </TouchableOpacity>
                             )}
                           </View>

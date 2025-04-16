@@ -3,16 +3,11 @@ import React from 'react';
 import { View, Text, Image, Modal, StyleSheet, TouchableOpacity, Linking, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 import LottieView from 'lottie-react-native';
+import { router } from 'expo-router';
+
 
 const ShopCard = ({ visible, onRequestClose, shop }) => {
-    const equipment = [
-        { name: 'Racket', priceRange: '5,000 - 100,000' },
-        { name: 'Shoes', priceRange: '10,000 - 50,000' },
-        { name: 'Bags', priceRange: '5,000 - 30,000' },
-        { name: 'Grips', priceRange: '800 - 1,500' },
-        { name: 'Clothing', priceRange: '1,500 - 5,000' },
-        { name: 'Shuttlecocks', priceRange: '1,200 - 8,000' },
-    ];
+   
 
 
     const handlePhoneCall = () => {
@@ -28,7 +23,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
     };
 
     const handleShopNow = () => {
-        // Handle shop now action
+        router.push('/items')
 
     };
 
@@ -125,7 +120,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                         style={styles.shopButton}
                         onPress={handleShopNow}
                     >
-                        <Text style={styles.shopButtonText}>Shop Now</Text>
+                        <Text style={styles.shopButtonText} >Shop Now</Text>
                     </TouchableOpacity>
                 </View>
             </View>
