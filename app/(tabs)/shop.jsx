@@ -117,12 +117,12 @@ const Shop = () => {
               <View style={styles.shopInfo}>
                 <View style={styles.infoSection}>
                   <View style={styles.infoRow}>
-                    <Icon name="phone" size={16} color="#4A80F0" />
+                    <Icon name="phone" size={16} color="#fff" />
                     <Text style={styles.infoText}>{shop.Tel}</Text>
                   </View>
 
                   <View style={styles.infoRow}>
-                    <Icon name="globe" size={16} color="#4A80F0" />
+                    <Icon name="globe" size={16} color="#fff" />
                     <Text style={styles.infoText}>{shop.website}</Text>
                   </View>
                 </View>

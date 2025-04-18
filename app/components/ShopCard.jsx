@@ -23,10 +23,14 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
     };
 
     const handleShopNow = () => {
-        router.push('/items')
-
-    };
-
+        
+        router.push({
+          pathname: '/items',
+          params: { shopId: shop._id }, // or whatever variable holds it
+        });
+      };
+      
+      
     return (
         <Modal
             visible={visible}
