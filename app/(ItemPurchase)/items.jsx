@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router'; // Add useLocalSearchParams to get route params
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import icons from '../../constants/icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
+import ItemCard from '../components/ItemCard';
 
 const Items = () => {
-  const { shopId } = useLocalSearchParams(); // Get shopId from route params
+  const { shopId } = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -14,6 +15,10 @@ const Items = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [shopData, setShopData] = useState(null);
+  
+  // Add state for the ItemCard modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Fetch shop data and categories when component mounts
   useEffect(() => {
@@ -53,8 +58,6 @@ const Items = () => {
           
           setProducts(allItems);
           setFilteredProducts(allItems);
-          
-          // Optionally fetch shop details if needed
           
         } else {
           // If no specific shop, fetch all items
@@ -114,7 +117,7 @@ const Items = () => {
   const handleCategorySelect = async (category) => {
     setSelectedCategory(category);
     
-    // If selecting a specific category (not "All") and have shopId, fetch directly from the API
+
     if (category !== 'All' && shopId) {
       try {
         setLoading(true);
@@ -151,6 +154,18 @@ const Items = () => {
     router.push('/shop');
   };
 
+  // Function to handle product selection and show the modal
+  const handleProductSelect = (product) => {
+    setSelectedProduct(product);
+    setModalVisible(true);
+  };
+
+  // Function to close the modal
+  const handleCloseModal = () => {
+    setModalVisible(false);
+    setSelectedProduct(null);
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -169,9 +184,6 @@ const Items = () => {
       </View>
     );
   }
-
-  // Determine the shop name for the header title if available
-  
 
   return (
     <SafeAreaView style={styles.container}>
@@ -221,13 +233,7 @@ const Items = () => {
             <TouchableOpacity 
               key={product.id} 
               style={styles.productCard}
-              onPress={() => {
-                // Navigate to product details page when clicked
-                router.push({
-                  pathname: '/product/[id]',
-                  params: { id: product.id }
-                });
-              }}
+              onPress={() => handleProductSelect(product)}
             >
               <View style={styles.imageContainer}>
                 {product.image ? (
@@ -242,13 +248,12 @@ const Items = () => {
               </View>
               <View style={styles.productInfo}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-
-                <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
-                {product.color && (
-                  <View style={styles.colorContainer}>
-                    <View style={[styles.colorDot, { backgroundColor: product.color }]} />
-                  </View>
-                )}
+                  <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
+                  {product.color && (
+                    <View style={styles.colorContainer}>
+                      <View style={[styles.colorDot, { backgroundColor: product.color }]} />
+                    </View>
+                  )}
                 </View>
                 <Text style={styles.productPrice}>Rs. {parseInt(product.price).toLocaleString()}</Text>
                 
@@ -260,12 +265,23 @@ const Items = () => {
           ))}
         </ScrollView>
       )}
+
+    
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={handleCloseModal}
+      >
+        {selectedProduct && (
+          <ItemCard item={selectedProduct} onClose={handleCloseModal} />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  // ... existing styles remain the same
   container: {
     flex: 1,
     backgroundColor: '#0F0F1A',
@@ -326,7 +342,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     padding: 15,
-   
   },
   productCard: {
     width: '48%',
