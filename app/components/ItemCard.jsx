@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
 const ItemCard = ({ item, onClose }) => {
-  // Destructure item properties or use defaults
+  
   const { name, price, color, image } = item || {};
 
   return (
@@ -10,14 +10,14 @@ const ItemCard = ({ item, onClose }) => {
       <View style={styles.card}>
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: image || 'https://placeholder.com/product' }} 
+            source={{ uri: image || 'No Image' }} 
             style={styles.image}
             resizeMode="contain"
           />
         </View>
         
         <View style={styles.infoContainer}>
-          <Text style={styles.title}>{name || 'YONEX-Sac de raquette'}</Text>
+          <Text style={styles.title}>{name || 'No name'}</Text>
           <Text style={styles.price}>RS {parseInt(price || 15000).toLocaleString()}</Text>
           <Text style={styles.color}>{color || 'Blue'}</Text>
           
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   card: {
     width: '90%',
     maxWidth: 500,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#0F0F1A',
     borderRadius: 10,
     overflow: 'hidden',
   },
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buyButton: {
-    backgroundColor: '#000000',
+    backgroundColor: 'blue',
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   buyButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   closeButton: {
