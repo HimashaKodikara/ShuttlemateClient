@@ -11,8 +11,8 @@ import * as Google from 'expo-auth-session/providers/google';
 import icons from '../../constants/icons.js';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-
+import axios from 'axios';
+import API_BASE_URL from '../../server/api.config.js';
 
 
 // Make sure to call this at the top level
@@ -25,13 +25,13 @@ const SignIn = () => {
   const [showPassword, setshowPassword] = useState(false);
   const auth = FIREBASE_AUTH;
 
-
   useEffect(() => {
     const setLoginTimestamp = async () => {
       await AsyncStorage.setItem('loginTimestamp', Date.now().toString());
     };
     setLoginTimestamp();
   }, []);
+  
   // Set up Google OAuth request
   const [request, response, promptAsync] = Google.useAuthRequest({
     expoClientId: 'YOUR_EXPO_CLIENT_ID',
@@ -48,10 +48,144 @@ const SignIn = () => {
     }
   }, [response]);
 
+
+  const fetchUserDataAndStoreUserId = async (userEmail) => {
+    try {
+     
+      const response = await axios.get(`${API_BASE_URL}/user?email=${userEmail}`);
+      
+      if (response.data && response.data.length > 0) {
+        const userData = response.data[0];
+        
+        // Store both Firebase UID and MongoDB ID
+        await AsyncStorage.setItem('userId', userData._id);
+        await AsyncStorage.setItem('firebaseUid', auth.currentUser.uid);
+        
+        console.log('User IDs stored:', {
+          mongoDbId: userData._id,
+          firebaseUid: auth.currentUser.uid
+        });
+        
+        return userData;
+      } else {
+        console.log('No user found with this email in the database');
+        
+        // Handle case where user exists in Firebase but not in MongoDB
+        // You might want to create a new user in MongoDB here
+        const newUserResponse = await createUserInMongoDB(userEmail, auth.currentUser.uid);
+        if (newUserResponse && newUserResponse._id) {
+         // await AsyncStorage.setItem('userId', newUserResponse._id);
+          await AsyncStorage.setItem('firebaseUid', auth.currentUser.uid);
+          return newUserResponse;
+        }
+        
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
+  };
+  
+  // Add this helper function to create a user in MongoDB if they don't exist
+  const createUserInMongoDB = async (email, firebaseUid) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/user`, {
+        email,
+        firebaseUid,
+        // Add any other default fields you need
+      });
+      
+     
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user in MongoDB:', error);
+      return null;
+    }
+  };
+
+  // const login = async () => {
+  //   // Validate input fields
+  //   if (!email || !password) {
+  //     // Show toast message for empty fields
+  //     Toast.show({
+  //       type: 'error',
+  //       position: 'top',
+  //       text1: 'Error',
+  //       text2: 'Please enter both email and password',
+  //       visibilityTime: 3000,
+  //       autoHide: true,
+  //       topOffset: 30,
+  //       bottomOffset: 40,
+  //     });
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     const response = await signInWithEmailAndPassword(auth, email, password);
+      
+  //     // Fetch user data from your backend and store the user ID
+  //     const userData = await fetchUserDataAndStoreUserId(email);
+      
+  //     if (!userData) {
+  //       Toast.show({
+  //         type: 'warning',
+  //         position: 'top',
+  //         text1: 'Warning',
+  //         text2: 'User found in Firebase but not in database',
+  //         visibilityTime: 3000,
+  //         autoHide: true,
+  //       });
+  //     }
+      
+  //     // Handle successful login
+  //     Toast.show({
+  //       type: 'success',
+  //       position: 'top',
+  //       text1: 'Success',
+  //       text2: 'Successfully logged in',
+  //       visibilityTime: 3000,
+  //       autoHide: true,
+  //     });
+      
+  //     // Navigate after showing success toast
+  //     setTimeout(() => {
+  //       router.push('/home');
+  //     }, 1000);
+  //   } catch (error) {
+  //     console.log(error);
+
+  //     // Handle specific Firebase auth errors with user-friendly messages
+  //     let errorTitle = "Login Failed";
+  //     let errorMessage = error.message;
+      
+  //     if (error.code === 'auth/invalid-email') {
+  //       errorMessage = 'Please enter a valid email address.';
+  //     } else if (error.code === 'auth/user-not-found') {
+  //       errorMessage = 'No account found with this email address.';
+  //     } else if (error.code === 'auth/wrong-password') {
+  //       errorMessage = 'Incorrect password. Please try again.';
+  //     } else if (error.code === 'auth/too-many-requests') {
+  //       errorMessage = 'Too many failed login attempts. Please try again later.';
+  //     }
+
+  //     // Show toast for error
+  //     Toast.show({
+  //       type: 'error',
+  //       position: 'top',
+  //       text1: errorTitle,
+  //       text2: errorMessage,
+  //       visibilityTime: 3000,
+  //       autoHide: true,
+  //     });
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
   const login = async () => {
     // Validate input fields
     if (!email || !password) {
-      // Show toast message for empty fields
       Toast.show({
         type: 'error',
         position: 'top',
@@ -64,10 +198,36 @@ const SignIn = () => {
       });
       return;
     }
-
+  
     setLoading(true);
     try {
+      // First clear any existing user data
+      await AsyncStorage.removeItem('userId');
+      await AsyncStorage.removeItem('firebaseUid');
+      
       const response = await signInWithEmailAndPassword(auth, email, password);
+     
+      
+      // Fetch user data from your backend and store the user ID
+      const userData = await fetchUserDataAndStoreUserId(email);
+      
+      if (!userData) {
+        Toast.show({
+          type: 'warning',
+          position: 'top',
+          text1: 'Account Setup',
+          text2: 'Setting up your account details...',
+          visibilityTime: 3000,
+          autoHide: true,
+        });
+      }
+      
+      // Verify we have a MongoDB ID before proceeding
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (!storedUserId) {
+        throw new Error('Failed to retrieve or create MongoDB user ID');
+      }
+      
       // Handle successful login
       Toast.show({
         type: 'success',
@@ -84,11 +244,12 @@ const SignIn = () => {
       }, 1000);
     } catch (error) {
       console.log(error);
-
-      // Handle specific Firebase auth errors with user-friendly messages
+      
+      // Error handling as before
       let errorTitle = "Login Failed";
       let errorMessage = error.message;
       
+      // Handle specific Firebase auth errors
       if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
       } else if (error.code === 'auth/user-not-found') {
@@ -98,8 +259,7 @@ const SignIn = () => {
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed login attempts. Please try again later.';
       }
-
-      // Show toast for error
+  
       Toast.show({
         type: 'error',
         position: 'top',
@@ -111,15 +271,28 @@ const SignIn = () => {
     } finally {
       setLoading(false);
     }
-  }
-
+  };
+  
   const signInWithGoogle = async (credential) => {
     setLoading(true);
     try {
+      // Clear existing user data
+      await AsyncStorage.removeItem('userId');
+      await AsyncStorage.removeItem('firebaseUid');
+      
       // Sign-in with the credential
       const userCredential = await signInWithCredential(auth, credential);
-      console.log('Google sign-in successful:', userCredential.user);
-
+      console.log('Google sign-in successful:', userCredential.user.email);
+      
+      // Fetch user data from your backend using the email
+      const userData = await fetchUserDataAndStoreUserId(userCredential.user.email);
+      
+      // Verify we have a MongoDB ID before proceeding
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (!storedUserId) {
+        throw new Error('Failed to retrieve or create MongoDB user ID');
+      }
+      
       Toast.show({
         type: 'success',
         position: 'bottom',
@@ -127,14 +300,14 @@ const SignIn = () => {
         text2: 'Successfully logged in with Google',
         visibilityTime: 2000,
       });
-
+  
       // Navigate to home page after toast shows
       setTimeout(() => {
         router.push('/home');
       }, 1000);
     } catch (error) {
       console.log('Google Sign-In Error:', error);
-
+  
       Toast.show({
         type: 'error',
         position: 'bottom',

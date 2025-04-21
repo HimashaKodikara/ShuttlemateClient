@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,useCallback} from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import icons from '../../constants/icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import ItemCard from '../components/ItemCard';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Items = () => {
   const { shopId } = useLocalSearchParams();
@@ -165,6 +166,18 @@ const Items = () => {
     setModalVisible(false);
     setSelectedProduct(null);
   };
+
+   useFocusEffect(
+      useCallback(() => {
+       
+        setModalVisible(false);
+        setSelectedProduct(null);
+        
+        return () => {
+      
+        };
+      }, [])
+    );
 
   if (loading) {
     return (

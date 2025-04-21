@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-
+//import PaymentScreen from './PaymentScreen'; // Assuming this is the path to your PaymentScreen component
+import { router } from 'expo-router'; // Assuming you're using expo-router for navigation
 const ItemCard = ({ item, onClose }) => {
   
   const { name, price, color, image } = item || {};
@@ -21,7 +22,7 @@ const ItemCard = ({ item, onClose }) => {
           <Text style={styles.price}>RS {parseInt(price || 15000).toLocaleString()}</Text>
           <Text style={styles.color}>{color || 'Blue'}</Text>
           
-          <TouchableOpacity style={styles.buyButton} onPress={() => console.log('Buy Now pressed')}>
+          <TouchableOpacity style={styles.buyButton} onPress={() => router.push('/(Payment)/PaymentAdress')}>
             <Text style={styles.buyButtonText}>Buy Now</Text>
           </TouchableOpacity>
         </View>
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buyButton: {
-    backgroundColor: 'blue',
+    backgroundColor: '#1F3B8B',
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',

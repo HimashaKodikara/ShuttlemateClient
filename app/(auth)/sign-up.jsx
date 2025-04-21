@@ -7,10 +7,13 @@ import logo from '../../constants/icons.js';
 import { getAuth, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import API_BASE_URL from '../../server/api.config';
+
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name,setName] = useState('');
   const [loading, setLoading] = useState(false);
 
 
@@ -21,39 +24,104 @@ const Signup = () => {
       webClientId: '902062135902-u2gdc6rsgu4fkip7oljqttnam1fj9so0.apps.googleusercontent.com',
     });
   
+  // const sign = async () => {
+  //   if (!email || !password) {
+  //     Alert.alert("Error", "Please enter both email and password");
+  //     return;
+  //   }
+    
+  //   setLoading(true);
+  //   try {
+  //     const auth = getAuth(); // Initialize Firebase Authentication
+  //     const response = await createUserWithEmailAndPassword(auth, email, password);
+      
+  //     console.log(response);
+      
+  //     // Show success message with React Native Alert
+  //     Alert.alert(
+  //       "Success!",
+  //       "Sign Up Successful! Please log in.",
+  //       [
+  //         { 
+  //           text: "OK", 
+  //           onPress: () => {
+  //             // Navigate to sign-in page after the alert is closed
+  //             setTimeout(() => {
+  //               router.push('/sign-in');
+  //             }, 500);
+  //           }
+  //         }
+  //       ]
+  //     );
+  //   } catch (error) {
+  //     console.log(error);
+      
+  //     // Handle specific Firebase auth errors with user-friendly messages
+  //     let errorMessage = error.message;
+  //     if (error.code === 'auth/email-already-in-use') {
+  //       errorMessage = 'This email is already registered. Try signing in instead.';
+  //     } else if (error.code === 'auth/invalid-email') {
+  //       errorMessage = 'Please enter a valid email address.';
+  //     } else if (error.code === 'auth/weak-password') {
+  //       errorMessage = 'Password is too weak. Please use a stronger password.';
+  //     }
+      
+  //     Alert.alert(
+  //       "Sign Up Failed",
+  //       errorMessage,
+  //       [{ text: "OK" }]
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const sign = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
+    if (!email || !password || !name) {
+      Alert.alert("Error", "Please fill all fields");
       return;
     }
-    
+  
     setLoading(true);
     try {
-      const auth = getAuth(); // Initialize Firebase Authentication
-      const response = await createUserWithEmailAndPassword(auth, email, password);
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      console.log(response);
-      
-      // Show success message with React Native Alert
-      Alert.alert(
-        "Success!",
-        "Sign Up Successful! Please log in.",
-        [
-          { 
-            text: "OK", 
-            onPress: () => {
-              // Navigate to sign-in page after the alert is closed
-              setTimeout(() => {
-                router.push('/sign-in');
-              }, 500);
-            }
-          }
-        ]
-      );
+      // Get Firebase UID from the user credential
+      const firebaseUid = userCredential.user.uid;
+  
+      // Call Express backend to save this user with the Firebase UID
+      const response = await fetch(`${API_BASE_URL}/user/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          firebaseUid, // Include Firebase UID
+          role: 'user',
+          password, // Optional placeholder
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error saving user to MongoDB');
+      }
+  
+      Alert.alert("Success!", "Sign Up Successful! Please log in.", [
+        {
+          text: "OK",
+          onPress: () => {
+            setTimeout(() => {
+              router.push('/sign-in');
+            }, 500);
+          },
+        },
+      ]);
     } catch (error) {
-      console.log(error);
-      
-      // Handle specific Firebase auth errors with user-friendly messages
+      // Error handling remains the same
+      console.error(error);
       let errorMessage = error.message;
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = 'This email is already registered. Try signing in instead.';
@@ -62,12 +130,8 @@ const Signup = () => {
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'Password is too weak. Please use a stronger password.';
       }
-      
-      Alert.alert(
-        "Sign Up Failed",
-        errorMessage,
-        [{ text: "OK" }]
-      );
+  
+      Alert.alert("Sign Up Failed", errorMessage, [{ text: "OK" }]);
     } finally {
       setLoading(false);
     }
@@ -75,46 +139,89 @@ const Signup = () => {
   
 
   const signInWithGoogle = async (credential) => {
-      setLoading(true);
-      try {
-        // Sign-in with the credential
-        const userCredential = await signInWithCredential(auth, credential);
-        console.log('Google sign-in successful:', userCredential.user);
+    setLoading(true);
+    try {
+      // Sign-in with the credential
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+      console.log('Google sign-in successful:', user);
+      
+      // Check if user exists in MongoDB by firebase UID
+      const checkResponse = await fetch(`${API_BASE_URL}/user/check/${user.uid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      // If user doesn't exist in MongoDB (status 404), create them
+      if (checkResponse.status === 404) {
+        const createResponse = await fetch(`${API_BASE_URL}/user/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: user.displayName || 'Google User',
+            email: user.email,
+            firebaseUid: user.uid,
+            role: 'user',
+            password: 'google-auth-user', // You might use a placeholder or random password
+          }),
+        });
         
-        Alert.alert(
-          "Success!",
-          "Successfully logged in with Google.",
-          [
-            { 
-              text: "OK", 
-              onPress: () => {
-                // Navigate to home page after alert is closed
-                setTimeout(() => {
-                  router.push('/home');
-                }, 500);
-              }
-            }
-          ]
-        );
-      } catch (error) {
-        console.log('Google Sign-In Error:', error);
-        
-        Alert.alert(
-          "Google Sign-In Failed",
-          "An error occurred during Google sign-in. Please try again.",
-          [{ text: "OK" }]
-        );
-      } finally {
-        setLoading(false);
+        if (!createResponse.ok) {
+          const errorData = await createResponse.json();
+          throw new Error(errorData.message || 'Error saving Google user to MongoDB');
+        }
       }
-    };
-  
+      
+      Alert.alert(
+        "Success!",
+        "Successfully logged in with Google.",
+        [
+          { 
+            text: "OK", 
+            onPress: () => {
+              // Navigate to home page after alert is closed
+              setTimeout(() => {
+                router.push('/home');
+              }, 500);
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.log('Google Sign-In Error:', error);
+      
+      Alert.alert(
+        "Google Sign-In Failed",
+        "An error occurred during Google sign-in. Please try again.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <View style={styles.container}>
       <View style={styles.formContainer}>
         <Text style={styles.headerText}>Explore now</Text>
         <Text style={styles.subHeaderText}>Join with us today.</Text>
         
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>User Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholderTextColor="#666"
+            autoCapitalize="none"
+            value={name}
+            placeholder='Enter your Name'
+          
+            autoComplete="name"
+            onChangeText={(text) => setName(text)}
+          />
+        </View>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email address</Text>
           <TextInput

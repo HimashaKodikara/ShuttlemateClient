@@ -124,17 +124,17 @@ const Courts = () => {
 
                 <View style={styles.infoSection}>
                   <View style={styles.infoContainer}>
-                    <Ionicons name="location-outline" size={18} color="#4A80F0" />
+                    <Ionicons name="location-outline" size={18} color="#fff" />
                     <Text style={styles.infoText}>{court.place}</Text>
                   </View>
 
                   <View style={styles.infoContainer}>
-                    <Ionicons name="call-outline" size={18} color="#4A80F0" />
+                    <Ionicons name="call-outline" size={18} color="#fff" />
                     <Text style={styles.infoText}>{court.Tel}</Text>
                   </View>
 
                   <View style={styles.infoContainer}>
-                    <Ionicons name="time-outline" size={18} color="#4A80F0" />
+                    <Ionicons name="time-outline" size={18} color="#fff" />
                     <Text style={styles.infoText}>{court.Openinghours}</Text>
                   </View>
                 </View>

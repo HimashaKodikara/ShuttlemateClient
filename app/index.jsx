@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import images from '../constants/images';
 import { Redirect,router } from 'expo-router';
 const { width, height } = Dimensions.get('window');
-
 // Angled split image component
 const AngledSplitImageContainer = ({ leftImage, rightImage, style }) => {
   return (
