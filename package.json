@@ -10,20 +10,23 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-native-async-storage/async-storage": "^1.24.0",
+    "@lottiefiles/dotlottie-react": "^0.6.5",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-firebase/app": "^21.13.0",
     "@react-native-firebase/auth": "^21.13.0",
     "@react-native-google-signin/google-signin": "^13.2.0",
-    "@react-navigation/bottom-tabs": "^7.3.3",
-    "@react-navigation/native": "^7.1.6",
+    "@react-navigation/bottom-tabs": "^7.2.0",
+    "@react-navigation/native": "^7.0.14",
+    "@stripe/stripe-react-native": "0.38.6",
     "axios": "^1.8.4",
     "dotenv": "^16.4.7",
-    "expo": "~52.0.42",
+    "expo": "~52.0.46",
     "expo-auth-session": "~6.0.3",
     "expo-av": "~15.0.2",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.8",
     "expo-crypto": "~14.0.2",
+    "expo-dev-client": "~5.0.20",
     "expo-font": "~13.0.4",
     "expo-linear-gradient": "^14.0.2",
     "expo-linking": "~7.0.5",
@@ -36,11 +39,12 @@
     "mongodb": "^6.15.0",
     "nativewind": "^4.1.23",
     "react": "18.3.1",
-    "react-native": "^0.76.8",
+    "react-native": "0.76.9",
     "react-native-animatable": "^1.4.0",
     "react-native-feather": "^1.1.2",
-    "react-native-google-signin": "^2.1.1",
+    "react-native-gesture-handler": "~2.20.2",
     "react-native-linear-gradient": "^2.8.3",
+    "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
@@ -49,13 +53,30 @@
     "react-navigation-shared-element": "^3.1.3",
     "react-router-native": "^6.30.0",
     "sweetalert2": "^11.17.2",
-    "tailwindcss": "^3.4.17",
-    "react-native-gesture-handler": "~2.20.2",
-    "react-native-reanimated": "~3.16.1",
-    "@stripe/stripe-react-native": "0.38.6"
+    "tailwindcss": "^3.4.17"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
   },
-  "private": true
+  "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": [
+          "@stripe/stripe-react-native",
+          "@lottiefiles/dotlottie-react",
+          "dotenv",
+          "firebase",
+          "mongodb",
+          "react-native-feather",
+          "react-native-google-signin",
+          "react-navigation-shared-element",
+          "react-router-native",
+          "sweetalert2",
+          "tailwindcss"
+        ],
+        "listUnknownPackages": false
+      }
+    }
+  }
 }

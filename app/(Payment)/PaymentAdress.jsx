@@ -23,6 +23,7 @@ import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 
 
+
 const PaymentAddress = ({ navigation }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
@@ -140,6 +141,7 @@ useEffect(() => {
         // Or use router
         // router.back();
       }
+        router.push('/PaymentCard');
     } catch (error) {
       console.error('Error updating user data:', error);
       console.log('Error response:', error.response);
@@ -276,7 +278,7 @@ useEffect(() => {
                 disabled={isLoading}
               >
                 <Text style={styles.saveButtonText}>
-                  {isLoading ? 'Updating...' : 'Save Address'}
+                  {isLoading ? 'Saving...' : 'Save Address'}
                 </Text>
               </TouchableOpacity>
             </View>
