@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   placeCourtClickable: {
     fontSize: 12,
     color: '#4A80F0',
-    textDecorationLine: 'underline',
+ 
   },
   phonecontainer: {
     flexDirection: 'row',
