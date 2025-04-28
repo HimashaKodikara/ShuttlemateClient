@@ -13,9 +13,10 @@ import {
 import React, { useEffect, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
-
+import { useNavigation } from '@react-navigation/native';
 
 const CoachCard = ({ coach, visible, onRequestClose }) => {
+  const navigation = useNavigation();
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
@@ -46,6 +47,18 @@ const CoachCard = ({ coach, visible, onRequestClose }) => {
   const handlePhoneCall = () => {
     const phoneNumber = `tel:${coach.Tel}`;
     Linking.openURL(phoneNumber).catch((err) => console.error('Error making the call:', err));
+  };
+
+  // Function to navigate to Courts screen with the selected court
+  const navigateToCourt = (court) => {
+   
+    onRequestClose();
+    
+    
+    navigation.navigate('court', { 
+      selectedCourtId: court._id,
+      courtName: court.CourtName
+    });
   };
 
   // Check if Courts are properly populated objects or just IDs
@@ -88,19 +101,15 @@ const CoachCard = ({ coach, visible, onRequestClose }) => {
           <View style={styles.infoRow}>
             <View style={styles.infoColumn}>
               <Text style={styles.infoLabel}>Phone</Text>
-              {/* <TouchableOpacity onPress={handlePhoneCall} style={styles.phonecontainer}>
-                <Ionicons name="call-outline" size={20} color="#666" />
-                <Text style={styles.infoText}>{coach.Tel}</Text>
-              </TouchableOpacity> */}
               <TouchableOpacity onPress={handlePhoneCall} style={styles.phonecontainer}>
-  <LottieView
-    source={require('../../assets/lottie/phone.json')} // Adjust the path to your Lottie file
-    autoPlay
-    loop
-    style={{ width: 24, height: 24 }}
-  />
-  <Text style={styles.infoText}>{coach.Tel}</Text>
-</TouchableOpacity>
+                <LottieView
+                  source={require('../../assets/lottie/phone.json')}
+                  autoPlay
+                  loop
+                  style={{ width: 24, height: 24 }}
+                />
+                <Text style={styles.infoText}>{coach.Tel}</Text>
+              </TouchableOpacity>
             </View>
             <View style={[styles.infoColumn, styles.rightAligned]}>
               <Text style={styles.infoLabel}>Coaching Experience</Text>
@@ -134,10 +143,14 @@ const CoachCard = ({ coach, visible, onRequestClose }) => {
             <View style={styles.placesContainer}>
               {hasPopulatedCourts ? (
                 coach.Courts.map((court, index) => (
-                  <View key={index} style={styles.placeItem}>
+                  <TouchableOpacity 
+                    key={index} 
+                    style={styles.placeItem}
+                    onPress={() => navigateToCourt(court)}
+                  >
                     <Text style={styles.placeLocation}>{court.place || 'Location'}</Text>
-                    <Text style={styles.placeCourt}>{court.CourtName}</Text>
-                  </View>
+                    <Text style={styles.placeCourtClickable}>{court.CourtName}</Text>
+                  </TouchableOpacity>
                 ))
               ) : (
                 <Text style={styles.infoText}>No court information available</Text>
@@ -172,7 +185,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'center',  
     marginBottom: 16,
   },
   name: {
@@ -238,20 +251,24 @@ const styles = StyleSheet.create({
   placeItem: {
     width: '48%',
     marginBottom: 8,
+    padding: 4,
+    borderRadius: 4,
+    backgroundColor: '#f9f9f9',
   },
   placeLocation: {
     fontSize: 13,
     fontWeight: '500',
     color: '#000',
   },
-  placeCourt: {
+  placeCourtClickable: {
     fontSize: 12,
-    color: '#777',
+    color: '#4A80F0',
+    textDecorationLine: 'underline',
   },
-  phonecontainer:{
+  phonecontainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap:5
+    gap: 5
   }
 });
 

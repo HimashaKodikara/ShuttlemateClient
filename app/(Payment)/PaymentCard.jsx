@@ -1,7 +1,7 @@
 import { CardField, useStripe } from '@stripe/stripe-react-native';
 import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import API_BASE_URL from '../../server/api.config';
+import API_BASE_URL from '../../server/api.config';''
 
 export default function PaymentScreen({ route, navigation }) {
   const { confirmPayment } = useStripe();
@@ -86,6 +86,8 @@ export default function PaymentScreen({ route, navigation }) {
   };
 
   return (
+        <StripeProvider publishableKey="pk_test_51QJef7RwP0CS6vlpJKa4aIbmfRJdUMqt8K4Lm1dBEM63cbBBvBgHLbpblPVZND1G7iNtTVhNEqCqk1YcFVgWFlqL0084kYVZX8">
+    
     <View style={styles.container}>
       <Text style={styles.title}>Complete Your Payment</Text>
 
@@ -134,6 +136,7 @@ export default function PaymentScreen({ route, navigation }) {
         )}
       </TouchableOpacity>
     </View>
+  </StripeProvider>
   );
 }
 

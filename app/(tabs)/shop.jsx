@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 20,
-    marginTop: 40,
+    marginTop: 25,
     letterSpacing: 0.5,
   },
   shopsList: {

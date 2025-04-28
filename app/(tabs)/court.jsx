@@ -1,25 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking, ActivityIndicator } from 'react-native';
-//import { Ionicons } from '@expo/vector-icons';
-import { Feather, MaterialIcons,Ionicons } from '@expo/vector-icons';
+import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import LottieView from 'lottie-react-native';
 import Matches from '../components/Matches';
-
+import { useRoute } from '@react-navigation/native';
 
 const Courts = () => {
-  const [court, setCourt] = useState([]);
+  const route = useRoute();
+  const scrollViewRef = useRef(null);
+  const courtRefs = useRef({});
+
+  const [courts, setCourts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMatches, setShowMatches] = useState(false);
+  const [selectedCourtId, setSelectedCourtId] = useState(null);
 
   const fetchCourts = () => {
     setLoading(true);
     axios.get(`${API_BASE_URL}/courts/`)
       .then(response => {
-        setCourt(response.data.courts);
+        setCourts(response.data.courts);
         setLoading(false);
+        
+        // If there's a selected court from navigation, set it
+        if (route.params?.selectedCourtId) {
+          setSelectedCourtId(route.params.selectedCourtId);
+        }
       })
       .catch(error => {
         console.error("Error Fetching data", error);
@@ -31,6 +40,21 @@ const Courts = () => {
   useEffect(() => {
     fetchCourts();
   }, []);
+
+  // Effect to scroll to the selected court once data is loaded
+  useEffect(() => {
+    if (!loading && selectedCourtId && courtRefs.current[selectedCourtId] && scrollViewRef.current) {
+      // Wait a moment for the layout to be ready
+      setTimeout(() => {
+        courtRefs.current[selectedCourtId].measure((fx, fy, width, height, px, py) => {
+          scrollViewRef.current.scrollTo({
+            y: py - 100, // Offset to position the court nicely in view
+            animated: true,
+          });
+        });
+      }, 500);
+    }
+  }, [loading, selectedCourtId, courts]);
 
   const openMaps = (latitude, longitude) => {
     const url = `google.navigation:q=${latitude},${longitude}`;
@@ -98,17 +122,31 @@ const Courts = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Courts</Text>
+        <Text style={styles.headerTitle}>
+        Courts
+        </Text>
         <TouchableOpacity style={styles.dropdown}>
           <Text style={styles.dropdownText}>Select the area</Text>
           <Ionicons name="chevron-down" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {court.length > 0 ? (
-          court.map((court) => (
-            <TouchableOpacity key={court._id} style={styles.courtCard} activeOpacity={0.92}>
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+      >
+        {courts.length > 0 ? (
+          courts.map((court) => (
+            <TouchableOpacity 
+              key={court._id} 
+              style={[
+                styles.courtCard,
+                selectedCourtId === court._id && styles.highlightedCard
+              ]} 
+              activeOpacity={0.92}
+              ref={ref => courtRefs.current[court._id] = ref}
+            >
               <View style={styles.imageContainer}>
                 <Image source={{ uri: court.CourtPhoto }} style={styles.courtImage} />
                 <View style={styles.courtImageOverlay}>
@@ -167,8 +205,6 @@ const Courts = () => {
                     }
                   }}
                 >
-               
-                  
                   <Ionicons name="navigate-outline" size={18} color="#fff" />
                   <Text style={styles.navigateText}>Navigate</Text>
                 </TouchableOpacity>
@@ -182,24 +218,25 @@ const Courts = () => {
           </View>
         )}
       </ScrollView>
-     <TouchableOpacity
-                  style={styles.matchesButton}
-                  onPress={toggleMatches}
-                  activeOpacity={0.7}
-                >
-                  <LottieView
-                    source={require('../../assets/lottie/calendar.json')}
-                    autoPlay
-                    loop
-                    style={{ width: 40, height: 40 }}
-                    colorFilters={[
-                      {
-                        keypath: "**", // This targets all elements in the animation
-                        color: "#FFFFFF" // White color
-                      }
-                    ]}
-                  />
-                </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.matchesButton}
+        onPress={toggleMatches}
+        activeOpacity={0.7}
+      >
+        <LottieView
+          source={require('../../assets/lottie/calendar.json')}
+          autoPlay
+          loop
+          style={{ width: 40, height: 40 }}
+          colorFilters={[
+            {
+              keypath: "**", // This targets all elements in the animation
+              color: "#FFFFFF" // White color
+            }
+          ]}
+        />
+      </TouchableOpacity>
       
       {/* Matches component that shows when button is clicked */}
       {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
@@ -252,6 +289,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  highlightedCard: {
+    borderWidth: 2,
+    borderColor: '#4A80F0',
+    shadowColor: '#4A80F0',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 12,
   },
   imageContainer: {
     position: 'relative',
