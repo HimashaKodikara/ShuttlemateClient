@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking, ActivityIndicator,RefreshControl } from 'react-native';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
@@ -17,6 +17,14 @@ const Courts = () => {
   const [error, setError] = useState(null);
   const [showMatches, setShowMatches] = useState(false);
   const [selectedCourtId, setSelectedCourtId] = useState(null);
+  const[refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Refresh data
+    fetchCourts();
+    setRefreshing(false);
+  }
 
   const fetchCourts = () => {
     setLoading(true);
@@ -41,18 +49,17 @@ const Courts = () => {
     fetchCourts();
   }, []);
 
-  // Effect to scroll to the selected court once data is loaded
   useEffect(() => {
     if (!loading && selectedCourtId && courtRefs.current[selectedCourtId] && scrollViewRef.current) {
-      // Wait a moment for the layout to be ready
+     
       setTimeout(() => {
         courtRefs.current[selectedCourtId].measure((fx, fy, width, height, px, py) => {
           scrollViewRef.current.scrollTo({
-            y: py - 100, // Offset to position the court nicely in view
+            y: py - 100, 
             animated: true,
           });
         });
-      }, 500);
+      }, 100);
     }
   }, [loading, selectedCourtId, courts]);
 
@@ -135,6 +142,12 @@ const Courts = () => {
         ref={scrollViewRef}
         style={styles.scrollView} 
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
       >
         {courts.length > 0 ? (
           courts.map((court) => (
@@ -209,6 +222,7 @@ const Courts = () => {
                   <Text style={styles.navigateText}>Navigate</Text>
                 </TouchableOpacity>
               </View>
+              
             </TouchableOpacity>
           ))
         ) : (

@@ -5,7 +5,8 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  RefreshControl
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -23,8 +24,16 @@ const Coaches = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showMatches, setShowMatches] = useState(false);
+  const[refreshing, setRefreshing] = useState(false);
+  
   
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Refresh data
+    fetchCoaches();
+    setRefreshing(false);
+  }
   const fetchCoaches = async () => {
     try {
       setLoading(true);
@@ -89,7 +98,13 @@ const Coaches = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.coachList}>
+      <ScrollView style={styles.coachList}
+       refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
+              }>
         {coaches && coaches.length > 0 ? coaches.map((coach) => (
           <TouchableOpacity key={coach._id} onPress={() => openModal(coach)}>
             <View style={styles.coachCard}>

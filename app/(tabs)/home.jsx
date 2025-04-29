@@ -121,7 +121,13 @@ const Home = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container}
+    refreshControl={
+      <RefreshControl
+        refreshing={refreshing}
+        onRefresh={onRefresh}
+      />
+    }>
       <FlatList
         data={items}
         keyExtractor={(item, index) =>

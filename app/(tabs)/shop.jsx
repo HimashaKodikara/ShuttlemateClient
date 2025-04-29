@@ -1,5 +1,5 @@
 // Shop.js - Fixed component
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView,RefreshControl } from 'react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import Icon from 'react-native-vector-icons/Feather';
 import axios from 'axios';
@@ -17,6 +17,15 @@ const Shop = () => {
   const [selectedShop, setSelectedShop] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [showMatches, setShowMatches] = useState(false);
+    const[refreshing, setRefreshing] = useState(false);
+  
+
+    const onRefresh = async () => {
+      setRefreshing(true);
+      // Refresh data
+      fetchShops();
+      setRefreshing(false);
+    }
 
   const fetchShops = () => {
     setLoading(true);
@@ -92,7 +101,13 @@ const Shop = () => {
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>Shops</Text>
 
-      <ScrollView style={styles.shopsList} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.shopsList} showsVerticalScrollIndicator={false}
+      refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                />
+              }>
         {shops && shops.length > 0 ? (
           shops.map((shop) => (
             <TouchableOpacity

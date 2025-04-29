@@ -1,5 +1,5 @@
-import React, { useState, useEffect ,useCallback} from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator, Modal, RefreshControl } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import icons from '../../constants/icons';
 import axios from 'axios';
@@ -16,92 +16,102 @@ const Items = () => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [shopData, setShopData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   
   // Add state for the ItemCard modal
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // Function to load shop data
+  const loadShopData = async () => {
+    try {
+      setLoading(true);
+      
+      // If we have a shopId, fetch items by shop ID
+      if (shopId) {
+        // Fetch items categorized by shop ID
+        const itemsResponse = await axios.get(`${API_BASE_URL}/items/shop/${shopId}`);
+        const categorizedItems = itemsResponse.data;
+        
+        // Extract categories
+        const categoryList = ['All'];
+        categorizedItems.forEach(category => {
+          categoryList.push(category.categoryName);
+        });
+        
+        setCategories(categoryList);
+        
+        // Flatten items for initial display
+        const allItems = [];
+        categorizedItems.forEach(category => {
+          category.items.forEach(item => {
+            allItems.push({
+              id: item._id,
+              name: item.name,
+              price: item.price,
+              color: item.color,
+              image: item.itemphoto,
+              category: category.categoryName,
+              categoryId: category.categoryId
+            });
+          });
+        });
+        
+        setProducts(allItems);
+        setFilteredProducts(allItems);
+        
+      } else {
+        // If no specific shop, fetch all items
+        const response = await axios.get(`${API_BASE_URL}/items`);
+        const categorizedItems = response.data;
+        
+        // Extract categories
+        const categoryList = ['All'];
+        categorizedItems.forEach(category => {
+          categoryList.push(category.categoryName);
+        });
+        
+        setCategories(categoryList);
+        
+        // Flatten items for initial display
+        const allItems = [];
+        categorizedItems.forEach(category => {
+          category.items.forEach(item => {
+            allItems.push({
+              id: item._id,
+              name: item.name,
+              price: item.price,
+              color: item.color,
+              image: item.itemphoto,
+              category: category.categoryName,
+              categoryId: category.categoryId,
+              shopId: item.shopId,
+              shopName: item.shopName
+            });
+          });
+        });
+        
+        setProducts(allItems);
+        setFilteredProducts(allItems);
+      }
+    } catch (err) {
+      console.error('Error fetching shop data:', err);
+      setError('Failed to load shop data. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   // Fetch shop data and categories when component mounts
   useEffect(() => {
-    const loadShopData = async () => {
-      try {
-        setLoading(true);
-        
-        // If we have a shopId, fetch items by shop ID
-        if (shopId) {
-          // Fetch items categorized by shop ID
-          const itemsResponse = await axios.get(`${API_BASE_URL}/items/shop/${shopId}`);
-          const categorizedItems = itemsResponse.data;
-          
-          // Extract categories
-          const categoryList = ['All'];
-          categorizedItems.forEach(category => {
-            categoryList.push(category.categoryName);
-          });
-          
-          setCategories(categoryList);
-          
-          // Flatten items for initial display
-          const allItems = [];
-          categorizedItems.forEach(category => {
-            category.items.forEach(item => {
-              allItems.push({
-                id: item._id,
-                name: item.name,
-                price: item.price,
-                color: item.color,
-                image: item.itemphoto,
-                category: category.categoryName,
-                categoryId: category.categoryId
-              });
-            });
-          });
-          
-          setProducts(allItems);
-          setFilteredProducts(allItems);
-          
-        } else {
-          // If no specific shop, fetch all items
-          const response = await axios.get(`${API_BASE_URL}/items`);
-          const categorizedItems = response.data;
-          
-          // Extract categories
-          const categoryList = ['All'];
-          categorizedItems.forEach(category => {
-            categoryList.push(category.categoryName);
-          });
-          
-          setCategories(categoryList);
-          
-          // Flatten items for initial display
-          const allItems = [];
-          categorizedItems.forEach(category => {
-            category.items.forEach(item => {
-              allItems.push({
-                id: item._id,
-                name: item.name,
-                price: item.price,
-                color: item.color,
-                image: item.itemphoto,
-                category: category.categoryName,
-                categoryId: category.categoryId,
-                shopId: item.shopId,
-                shopName: item.shopName
-              });
-            });
-          });
-          
-          setProducts(allItems);
-          setFilteredProducts(allItems);
-        }
-      } catch (err) {
-        console.error('Error fetching shop data:', err);
-        setError('Failed to load shop data. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    loadShopData();
+  }, [shopId]);
 
+  // Handle refresh
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setError(null);
     loadShopData();
   }, [shopId]);
 
@@ -118,7 +128,6 @@ const Items = () => {
   const handleCategorySelect = async (category) => {
     setSelectedCategory(category);
     
-
     if (category !== 'All' && shopId) {
       try {
         setLoading(true);
@@ -167,19 +176,18 @@ const Items = () => {
     setSelectedProduct(null);
   };
 
-   useFocusEffect(
-      useCallback(() => {
-       
-        setModalVisible(false);
-        setSelectedProduct(null);
-        
-        return () => {
+  useFocusEffect(
+    useCallback(() => {
+      setModalVisible(false);
+      setSelectedProduct(null);
       
-        };
-      }, [])
-    );
+      return () => {
+        // Cleanup function
+      };
+    }, [])
+  );
 
-  if (loading) {
+  if (loading && !refreshing) {
     return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color="#5e72e4" />
@@ -187,11 +195,14 @@ const Items = () => {
     );
   }
 
-  if (error) {
+  if (error && !refreshing) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => router.push('/shop')}>
+        <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.retryButton, {marginTop: 10}]} onPress={() => router.push('/shop')}>
           <Text style={styles.retryButtonText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -241,7 +252,18 @@ const Items = () => {
           <Text style={styles.emptyText}>No products available in this category</Text>
         </View>
       ) : (
-        <ScrollView contentContainerStyle={styles.productsGrid}>
+        <ScrollView 
+          contentContainerStyle={styles.productsGrid}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#5e72e4"
+              colors={["black"]}
+              progressBackgroundColor="white"
+            />
+          }
+        >
           {filteredProducts.map(product => (
             <TouchableOpacity 
               key={product.id} 
@@ -279,7 +301,6 @@ const Items = () => {
         </ScrollView>
       )}
 
-    
       <Modal
         animationType="fade"
         transparent={true}
@@ -355,6 +376,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     padding: 15,
+    paddingBottom: 30, // Add extra padding at the bottom for pull to refresh
+    minHeight: '100%', // Ensure scroll view is always scrollable for refresh to work
   },
   productCard: {
     width: '48%',
