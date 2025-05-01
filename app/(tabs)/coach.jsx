@@ -6,40 +6,56 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Modal,
+  FlatList
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import CoachCard from '../components/CoachCard';
 import Matches from '../components/Matches';
-import { Feather, MaterialIcons,Ionicons } from '@expo/vector-icons';
+import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
-
 
 const Coaches = () => {
   const [coaches, setCoaches] = useState([]);
+  const [filteredCoaches, setFilteredCoaches] = useState([]);
   const [selectedCoach, setSelectedCoach] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showMatches, setShowMatches] = useState(false);
-  const[refreshing, setRefreshing] = useState(false);
-  
-  
+  const [refreshing, setRefreshing] = useState(false);
+  const [trainingTypes, setTrainingTypes] = useState([]);
+  const [selectedTrainingType, setSelectedTrainingType] = useState(null);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
     // Refresh data
-    fetchCoaches();
+    await fetchCoaches();
     setRefreshing(false);
-  }
+  };
+
   const fetchCoaches = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/Coachers/`);
       if (response.data.success) {
         setCoaches(response.data.coachers);
+        setFilteredCoaches(response.data.coachers);
+        
+        // Extract all unique training types
+        const allTrainingTypes = new Set();
+        response.data.coachers.forEach(coach => {
+          if (coach.TrainingType && Array.isArray(coach.TrainingType)) {
+            coach.TrainingType.forEach(type => {
+              allTrainingTypes.add(type);
+            });
+          }
+        });
+        setTrainingTypes(Array.from(allTrainingTypes));
       } else {
         setError('Failed to fetch coaches');
       }
@@ -64,8 +80,29 @@ const Coaches = () => {
     setModalVisible(false);
     setSelectedCoach(null);
   };
+
   const toggleMatches = () => {
     setShowMatches(!showMatches);
+  };
+
+  const toggleDropdown = () => {
+    setDropdownVisible(!dropdownVisible);
+  };
+
+  const selectTrainingType = (type) => {
+    setSelectedTrainingType(type);
+    setDropdownVisible(false);
+    
+    if (type === null) {
+      // Reset filter
+      setFilteredCoaches(coaches);
+    } else {
+      // Filter coaches by selected training type
+      const filtered = coaches.filter(coach => 
+        coach.TrainingType && coach.TrainingType.includes(type)
+      );
+      setFilteredCoaches(filtered);
+    }
   };
 
   if (loading) {
@@ -92,20 +129,59 @@ const Coaches = () => {
       <Text style={styles.heading}>Coaches</Text>
 
       <View style={styles.dropdownContainer}>
-        <TouchableOpacity style={styles.dropdown}>
-          <Text style={styles.dropdownText}>Select the coach requirement type</Text>
-          <Text style={styles.dropdownIcon}>▼</Text>
+        <TouchableOpacity style={styles.dropdown} onPress={toggleDropdown}>
+          <Text style={styles.dropdownText}>
+            {selectedTrainingType || "Select the coach requirement type"}
+          </Text>
+                      <Ionicons name="chevron-down" size={20} color="#fff" />
+          
         </TouchableOpacity>
+
+        {/* Training Type Dropdown Modal */}
+        <Modal
+          visible={dropdownVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setDropdownVisible(false)}
+        >
+          <TouchableOpacity 
+            style={styles.dropdownOverlay}
+            activeOpacity={1}
+            onPress={() => setDropdownVisible(false)}
+          >
+            <View style={styles.dropdownMenu}>
+               <Text style={styles.modalTitle}>Select Your Experiance</Text>
+              <TouchableOpacity 
+                style={styles.dropdownItem} 
+                onPress={() => selectTrainingType(null)}
+              >
+                <Text style={styles.dropdownItemText}>All</Text>
+              </TouchableOpacity>
+              
+              {trainingTypes.map((type, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.dropdownItem}
+                  onPress={() => selectTrainingType(type)}
+                >
+                  <Text style={styles.dropdownItemText}>{type}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </View>
 
-      <ScrollView style={styles.coachList}
-       refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                />
-              }>
-        {coaches && coaches.length > 0 ? coaches.map((coach) => (
+      <ScrollView 
+        style={styles.coachList}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+          />
+        }
+      >
+        {filteredCoaches && filteredCoaches.length > 0 ? filteredCoaches.map((coach) => (
           <TouchableOpacity key={coach._id} onPress={() => openModal(coach)}>
             <View style={styles.coachCard}>
               <Image 
@@ -133,9 +209,22 @@ const Coaches = () => {
             </View>
           </TouchableOpacity>
         )) : (
-          <Text style={styles.noCoaches}>No coaches available</Text>
+          <View style={styles.noCoachesContainer}>
+            <Text style={styles.noCoaches}>
+              {selectedTrainingType 
+                ? `No coaches found for ${selectedTrainingType}` 
+                : 'No coaches available'}
+            </Text>
+            {selectedTrainingType && (
+              <TouchableOpacity 
+                style={styles.resetFilterButton}
+                onPress={() => selectTrainingType(null)}
+              >
+                <Text style={styles.resetFilterText}>Show all coaches</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
-         
       </ScrollView>
 
       {selectedCoach && (
@@ -147,24 +236,25 @@ const Coaches = () => {
           onRequestClose={closeModal}
         />
       )}
-     <TouchableOpacity
-                  style={styles.matchesButton}
-                  onPress={toggleMatches}
-                  activeOpacity={0.7}
-                >
-                  <LottieView
-                    source={require('../../assets/lottie/calendar.json')}
-                    autoPlay
-                    loop
-                    style={{ width: 40, height: 40 }}
-                    colorFilters={[
-                      {
-                        keypath: "**", // This targets all elements in the animation
-                        color: "#FFFFFF" // White color
-                      }
-                    ]}
-                  />
-                </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={styles.matchesButton}
+        onPress={toggleMatches}
+        activeOpacity={0.7}
+      >
+        <LottieView
+          source={require('../../assets/lottie/calendar.json')}
+          autoPlay
+          loop
+          style={{ width: 40, height: 40 }}
+          colorFilters={[
+            {
+              keypath: "**", // This targets all elements in the animation
+              color: "#FFFFFF" // White color
+            }
+          ]}
+        />
+      </TouchableOpacity>
       
       {/* Matches component that shows when button is clicked */}
       {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
@@ -191,14 +281,18 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     marginBottom: 16,
+    zIndex: 10,
   },
   dropdown: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#333',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   dropdownText: {
     color: '#888',
@@ -207,6 +301,29 @@ const styles = StyleSheet.create({
   dropdownIcon: {
     color: '#888',
     fontSize: 12,
+  },
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingTop: 250,
+  },
+  dropdownMenu: {
+    backgroundColor: '#1A1A2E',
+    width: '90%',
+    borderRadius: 8,
+    padding: 20,
+    maxHeight: 300,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: '#fff',
   },
   coachList: {
     flex: 1,
@@ -219,10 +336,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   
-    // Android shadow
+    
     elevation: 5,
   
-    // iOS shadow
+  
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -267,11 +384,25 @@ const styles = StyleSheet.create({
     color: '#bbb',
     fontSize: 12,
   },
+  noCoachesContainer: {
+    alignItems: 'center',
+    marginTop: 32,
+  },
   noCoaches: {
     color: '#888',
     fontSize: 16,
     textAlign: 'center',
-    marginTop: 32,
+    marginBottom: 16,
+  },
+  resetFilterButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  resetFilterText: {
+    color: '#fff',
+    fontSize: 14,
   },
   errorText: {
     color: '#ff6b6b',
@@ -306,6 +437,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     zIndex: 1000,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
 
