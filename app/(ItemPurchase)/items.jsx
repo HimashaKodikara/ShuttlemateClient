@@ -6,6 +6,7 @@ import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import ItemCard from '../components/ItemCard';
 import { useFocusEffect } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
 
 const Items = () => {
   const { shopId } = useLocalSearchParams();
@@ -216,11 +217,7 @@ const Items = () => {
           style={styles.backButton}
           onPress={handleBackPress}
         >
-          <Image
-            source={icons.back}
-            style={styles.backIcon}
-            resizeMode="contain"
-          />
+                   <Feather name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Shop Now</Text>
       </View>

@@ -1,57 +1,59 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
-import image from '../../constants/icons.js'
+import { View, TextInput, TouchableOpacity, Image, Alert, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { icons } from '../../constants/icons';
+import { router, usePathname } from 'expo-router';
+import Search from '../../assets/icons/search.png';
 
 const SearchInput = () => {
+  const pathname = usePathname();
+  const [query, setQuery] = useState('');
+
+
   return (
-    <View>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholderTextColor="#CDCDE0"
-          autoCapitalize="none"
-          placeholder='Search for a video topic'
-          selectionColor="#fff"
-        />
-        <TouchableOpacity style={styles.searchIcon}>
-        <Image source={image.search} style={styles.searchIcon} />
-        </TouchableOpacity>
-       
-      </View>
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={styles.input}
+        value={query}
+        placeholder="Search for a video topic"
+        placeholderTextColor="white"
+        onChangeText={(e) => setQuery(e)}
+      />
+    <TouchableOpacity
+        onPress={() => {
+          if (query === "")
+            return Alert.alert(
+              "Missing Query",
+              "Please input something to search results across database"
+            );
+
+          if (pathname.startsWith("/search")) router.setParams({ query });
+          else router.push(`/search/${query}`);
+          
+        }}
+      >
+        <Image source={Search} style={{ width: 25, height: 25, marginTop: 7 }} />
+      </TouchableOpacity>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   inputContainer: {
-    flexDirection: 'row',
+    borderWidth: 2,
+    width: '100%',
+    height: 50,
+    paddingHorizontal: 16,
+    backgroundColor: 'gray',
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-    marginTop: 0,
-    position: 'relative',
-    flex: 1,
-    paddingHorizontal:5,
-    marginHorizontal:5,
-    backgroundColor:'grey',
-    borderRadius:24
+    flexDirection: 'row',
+    marginTop: 5,
   },
   input: {
-    height: 40,
-    color: 'white',
-    fontSize: 16,
-    padding: 8,
-    marginTop: 2, // equivalent to mt-0.5
     flex: 1,
-    paddingRight: 40, // make room for the icon
+    color: 'white',
   },
-  searchIcon: {
-    width: 20,
-    height: 20,
-    position: 'absolute',
-    right: 8,
-    
-  }
-})
+});
 
-export default SearchInput
+export default SearchInput;

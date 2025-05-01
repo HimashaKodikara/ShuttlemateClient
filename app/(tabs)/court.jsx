@@ -1,5 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, SafeAreaView, Linking, ActivityIndicator,RefreshControl } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  ScrollView, 
+  TouchableOpacity, 
+  SafeAreaView, 
+  Linking, 
+  ActivityIndicator,
+  RefreshControl,
+  Modal,
+  FlatList
+} from 'react-native';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
@@ -13,24 +26,35 @@ const Courts = () => {
   const courtRefs = useRef({});
 
   const [courts, setCourts] = useState([]);
+  const [allCourts, setAllCourts] = useState([]);
+  const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showMatches, setShowMatches] = useState(false);
   const [selectedCourtId, setSelectedCourtId] = useState(null);
-  const[refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedArea, setSelectedArea] = useState('All Areas');
+  const [showAreaDropdown, setShowAreaDropdown] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
     // Refresh data
     fetchCourts();
     setRefreshing(false);
-  }
+  };
 
   const fetchCourts = () => {
     setLoading(true);
     axios.get(`${API_BASE_URL}/courts/`)
       .then(response => {
-        setCourts(response.data.courts);
+        const courtsData = response.data.courts;
+        setAllCourts(courtsData);
+        setCourts(courtsData);
+        
+        // Extract unique areas from courts data
+        const uniqueAreas = [...new Set(courtsData.map(court => court.place))];
+        setAreas(['All Areas', ...uniqueAreas]);
+        
         setLoading(false);
         
         // If there's a selected court from navigation, set it
@@ -51,7 +75,6 @@ const Courts = () => {
 
   useEffect(() => {
     if (!loading && selectedCourtId && courtRefs.current[selectedCourtId] && scrollViewRef.current) {
-     
       setTimeout(() => {
         courtRefs.current[selectedCourtId].measure((fx, fy, width, height, px, py) => {
           scrollViewRef.current.scrollTo({
@@ -87,13 +110,26 @@ const Courts = () => {
     setShowMatches(!showMatches);
   };
 
+  const selectArea = (area) => {
+    setSelectedArea(area);
+    setShowAreaDropdown(false);
+    
+    // Filter courts based on selected area
+    if (area === 'All Areas') {
+      setCourts(allCourts);
+    } else {
+      const filteredCourts = allCourts.filter(court => court.place === area);
+      setCourts(filteredCourts);
+    }
+  };
+
   // Display loader while data is being fetched
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Courts</Text>
-          <TouchableOpacity style={styles.dropdown}>
+          <TouchableOpacity style={styles.dropdown} disabled>
             <Text style={styles.dropdownText}>Select the area</Text>
             <Ionicons name="chevron-down" size={20} color="#fff" />
           </TouchableOpacity>
@@ -111,7 +147,7 @@ const Courts = () => {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Courts</Text>
-          <TouchableOpacity style={styles.dropdown}>
+          <TouchableOpacity style={styles.dropdown} disabled>
             <Text style={styles.dropdownText}>Select the area</Text>
             <Ionicons name="chevron-down" size={20} color="#fff" />
           </TouchableOpacity>
@@ -130,10 +166,18 @@ const Courts = () => {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
-        Courts
+          Courts
         </Text>
-        <TouchableOpacity style={styles.dropdown}>
-          <Text style={styles.dropdownText}>Select the area</Text>
+        <TouchableOpacity 
+          style={styles.dropdown}
+          onPress={() => setShowAreaDropdown(true)}
+        >
+          <Text style={[
+            styles.dropdownText,
+            selectedArea !== 'All Areas' && styles.activeDropdownText
+          ]}>
+            {selectedArea}
+          </Text>
           <Ionicons name="chevron-down" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
@@ -228,7 +272,15 @@ const Courts = () => {
         ) : (
           <View style={styles.noDataContainer}>
             <Ionicons name="basketball-outline" size={60} color="#666" />
-            <Text style={styles.noDataText}>No courts available</Text>
+            <Text style={styles.noDataText}>No courts available in {selectedArea}</Text>
+            {selectedArea !== 'All Areas' && (
+              <TouchableOpacity 
+                style={styles.resetFilterButton}
+                onPress={() => selectArea('All Areas')}
+              >
+                <Text style={styles.resetFilterText}>Show all courts</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
@@ -254,6 +306,48 @@ const Courts = () => {
       
       {/* Matches component that shows when button is clicked */}
       {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
+
+      {/* Area selection modal */}
+      <Modal
+        visible={showAreaDropdown}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAreaDropdown(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowAreaDropdown(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Area</Text>
+            <FlatList
+              data={areas}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.areaItem,
+                    selectedArea === item && styles.selectedAreaItem
+                  ]}
+                  onPress={() => selectArea(item)}
+                >
+                  <Text style={[
+                    styles.areaItemText,
+                    selectedArea === item && styles.selectedAreaItemText
+                  ]}>
+                    {item}
+                  </Text>
+                  {selectedArea === item && (
+                    <Ionicons name="checkmark" size={20} color="#4A80F0" />
+                  )}
+                </TouchableOpacity>
+              )}
+              style={styles.areasList}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -289,6 +383,10 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 15,
     fontWeight: '500',
+  },
+  activeDropdownText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   scrollView: {
     padding: 16,
@@ -450,11 +548,22 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontWeight: '500',
   },
+  resetFilterButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(74, 128, 240, 0.2)',
+    borderRadius: 20,
+  },
+  resetFilterText: {
+    color: '#4A80F0',
+    fontWeight: '500',
+  },
   matchesButton: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: 'white',
+    backgroundColor: '#4A80F0',
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -466,6 +575,51 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     zIndex: 1000,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    maxHeight: '70%',
+    backgroundColor: '#1A1A2E',
+    borderRadius: 16,
+    overflow: 'hidden',
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  areasList: {
+    maxHeight: 400,
+  },
+  areaItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  selectedAreaItem: {
+    backgroundColor: 'rgba(74, 128, 240, 0.1)',
+  },
+  areaItemText: {
+    color: '#ccc',
+    fontSize: 16,
+  },
+  selectedAreaItemText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 
