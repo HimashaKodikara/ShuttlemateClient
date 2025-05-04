@@ -44,23 +44,23 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    width: '90%',
-    maxWidth: 500,
+    width: '100%',
+    maxWidth: 700,
     backgroundColor: '#0F0F1A',
     borderRadius: 10,
     overflow: 'hidden',
   },
   imageContainer: {
     width: '100%',
-    height: 200,
-    backgroundColor: '#FFFFFF',
+    height: 300,
+    backgroundColor: 'white',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
   },
   image: {
-    width: '100%',
+    width: '200%',
     height: '100%',
   },
   infoContainer: {

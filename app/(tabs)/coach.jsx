@@ -150,7 +150,7 @@ const Coaches = () => {
             onPress={() => setDropdownVisible(false)}
           >
             <View style={styles.dropdownMenu}>
-               <Text style={styles.modalTitle}>Select Your Experiance</Text>
+               <Text style={styles.modalTitle}>Select Your Requirment</Text>
               <TouchableOpacity 
                 style={styles.dropdownItem} 
                 onPress={() => selectTrainingType(null)}
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     marginBottom: 16,
-    zIndex: 10,
+    zIndex: 0,
   },
   dropdown: {
     flexDirection: 'row',
@@ -423,8 +423,8 @@ const styles = StyleSheet.create({
   },
   matchesButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 75, // Increased to position above the tab bar
+    right: 10,
     backgroundColor: 'white',
     width: 56,
     height: 56,

@@ -396,8 +396,8 @@ const styles = StyleSheet.create({
   },
   matchesButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 75, // Increased to position above the tab bar
+    right: 10,
     backgroundColor: 'white',
     width: 56,
     height: 56,

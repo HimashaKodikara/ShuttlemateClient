@@ -43,6 +43,12 @@ const Courts = () => {
     setRefreshing(false);
   };
 
+  // Updated function to handle phone number click with the court's phone number
+  const handlePhoneCall = (phoneNumber) => {
+    const formattedPhoneNumber = `tel:${phoneNumber}`;
+    Linking.openURL(formattedPhoneNumber).catch((err) => console.error('Error making the call:', err));
+  };
+
   const fetchCourts = () => {
     setLoading(true);
     axios.get(`${API_BASE_URL}/courts/`)
@@ -224,8 +230,13 @@ const Courts = () => {
                   </View>
 
                   <View style={styles.infoContainer}>
+                   <TouchableOpacity 
+                     onPress={() => handlePhoneCall(court.Tel)} 
+                     style={styles.phoneContainer}
+                   >
                     <Ionicons name="call-outline" size={18} color="#fff" />
                     <Text style={styles.infoText}>{court.Tel}</Text>
+                    </TouchableOpacity>
                   </View>
 
                   <View style={styles.infoContainer}>
@@ -457,6 +468,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 6,
   },
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   infoText: {
     marginLeft: 12,
     color: '#bbb',
@@ -561,8 +576,8 @@ const styles = StyleSheet.create({
   },
   matchesButton: {
     position: 'absolute',
-    bottom: 20,
-    right: 20,
+    bottom: 75, // Increased to position above the tab bar
+    right: 10,
     backgroundColor: 'white',
     width: 56,
     height: 56,
@@ -581,7 +596,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignmatchItems: 'center',
   },
   modalContent: {
     width: '85%',
