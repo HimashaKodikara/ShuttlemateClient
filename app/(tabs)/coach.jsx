@@ -17,6 +17,7 @@ import CoachCard from '../components/CoachCard';
 import Matches from '../components/Matches';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
+import Searchcoach from '../components/Searchcoach';
 
 const Coaches = () => {
   const [coaches, setCoaches] = useState([]);
@@ -45,7 +46,7 @@ const Coaches = () => {
       if (response.data.success) {
         setCoaches(response.data.coachers);
         setFilteredCoaches(response.data.coachers);
-        
+
         // Extract all unique training types
         const allTrainingTypes = new Set();
         response.data.coachers.forEach(coach => {
@@ -92,13 +93,13 @@ const Coaches = () => {
   const selectTrainingType = (type) => {
     setSelectedTrainingType(type);
     setDropdownVisible(false);
-    
+
     if (type === null) {
       // Reset filter
       setFilteredCoaches(coaches);
     } else {
       // Filter coaches by selected training type
-      const filtered = coaches.filter(coach => 
+      const filtered = coaches.filter(coach =>
         coach.TrainingType && coach.TrainingType.includes(type)
       );
       setFilteredCoaches(filtered);
@@ -129,13 +130,14 @@ const Coaches = () => {
       <Text style={styles.heading}>Coaches</Text>
 
       <View style={styles.dropdownContainer}>
-        <TouchableOpacity style={styles.dropdown} onPress={toggleDropdown}>
-          <Text style={styles.dropdownText}>
-            {selectedTrainingType || "Select the coach requirement type"}
-          </Text>
-                      <Ionicons name="chevron-down" size={20} color="#fff" />
-          
+      <View style={styles.searchFilterRow}>
+        <View style={styles.searchContainer}>
+          <Searchcoach />
+        </View>
+        <TouchableOpacity style={styles.filterButton} onPress={toggleDropdown}>
+          <Feather name="filter" size={22} color="#fff" />
         </TouchableOpacity>
+      </View>
 
         {/* Training Type Dropdown Modal */}
         <Modal
@@ -144,20 +146,20 @@ const Coaches = () => {
           animationType="fade"
           onRequestClose={() => setDropdownVisible(false)}
         >
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.dropdownOverlay}
             activeOpacity={1}
             onPress={() => setDropdownVisible(false)}
           >
             <View style={styles.dropdownMenu}>
-               <Text style={styles.modalTitle}>Select Your Requirment</Text>
-              <TouchableOpacity 
-                style={styles.dropdownItem} 
+              <Text style={styles.modalTitle}>Select Your Requirment</Text>
+              <TouchableOpacity
+                style={styles.dropdownItem}
                 onPress={() => selectTrainingType(null)}
               >
                 <Text style={styles.dropdownItemText}>All</Text>
               </TouchableOpacity>
-              
+
               {trainingTypes.map((type, index) => (
                 <TouchableOpacity
                   key={index}
@@ -172,7 +174,7 @@ const Coaches = () => {
         </Modal>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.coachList}
         refreshControl={
           <RefreshControl
@@ -184,7 +186,7 @@ const Coaches = () => {
         {filteredCoaches && filteredCoaches.length > 0 ? filteredCoaches.map((coach) => (
           <TouchableOpacity key={coach._id} onPress={() => openModal(coach)}>
             <View style={styles.coachCard}>
-              <Image 
+              <Image
                 source={{ uri: coach.CoachPhoto }}
                 style={styles.coachImage}
               />
@@ -211,12 +213,12 @@ const Coaches = () => {
         )) : (
           <View style={styles.noCoachesContainer}>
             <Text style={styles.noCoaches}>
-              {selectedTrainingType 
-                ? `No coaches found for ${selectedTrainingType}` 
+              {selectedTrainingType
+                ? `No coaches found for ${selectedTrainingType}`
                 : 'No coaches available'}
             </Text>
             {selectedTrainingType && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.resetFilterButton}
                 onPress={() => selectTrainingType(null)}
               >
@@ -236,7 +238,7 @@ const Coaches = () => {
           onRequestClose={closeModal}
         />
       )}
-      
+
       <TouchableOpacity
         style={styles.matchesButton}
         onPress={toggleMatches}
@@ -255,7 +257,7 @@ const Coaches = () => {
           ]}
         />
       </TouchableOpacity>
-      
+
       {/* Matches component that shows when button is clicked */}
       {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
     </View>
@@ -281,18 +283,28 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     marginBottom: 16,
-    zIndex: 0,
+    flex: 'row'
+  },
+  searchFilterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  searchContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  filterButton: {
+    backgroundColor: 'gray', 
+    padding: 8,
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dropdown: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#333',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    border: 2,
+    borderBlockColor: 'white'
   },
   dropdownText: {
     color: '#888',
@@ -335,17 +347,17 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
-  
-    
+
+
     elevation: 5,
-  
-  
+
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
-  
+
   coachImage: {
     width: 80,
     height: 80,

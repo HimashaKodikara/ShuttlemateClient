@@ -13,6 +13,8 @@ const RootLayout = () => {
         <Stack.Screen name="(ItemPurchase)" options={{headerShown:false}} />
         <Stack.Screen name="(Payment)" options={{headerShown:false}} />
         <Stack.Screen name="search/[query]" options={{headerShown:false}} />
+        <Stack.Screen name="searchcoach/[query1]" options={{headerShown:false}} />
+
       </Stack>
     </StripeProvider>
   )

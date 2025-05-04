@@ -367,6 +367,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F0F1A',
+    paddingBottom:50
   },
   header: {
     padding: 16,
@@ -605,6 +606,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     padding: 16,
+    marginHorizontal:"auto"
+    
   },
   modalTitle: {
     fontSize: 18,
