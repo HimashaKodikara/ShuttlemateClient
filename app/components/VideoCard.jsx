@@ -29,17 +29,13 @@ const VideoCard = ({ videoName, videoCreator, videoCreatorPhoto, imgUrl, videoUr
 
   // Handle video end
   const handleVideoEnd = (status) => {
-    console.log("Video status update:", status);
     if (status.didJustFinish) {
-      console.log("Video finished - showing thumbnail");
       setShowPlayer(false);
-      
-      }
-      
-      // Show thumbnail again
- 
-    
+      playerRef.current?.stop();
+      playerRef.current?.unloadAsync?.();
+    }
   };
+  
 
   return (
     <View style={styles.container}>

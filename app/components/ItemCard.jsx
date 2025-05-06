@@ -1,17 +1,16 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-//import PaymentScreen from './PaymentScreen'; // Assuming this is the path to your PaymentScreen component
 import { router } from 'expo-router'; // Assuming you're using expo-router for navigation
+
 const ItemCard = ({ item, onClose }) => {
-  
-  const { name, price, color, image } = item || {};
+  const { name, price, color, image, shopName } = item || {};
 
   return (
     <View style={styles.modalContainer}>
       <View style={styles.card}>
         <View style={styles.imageContainer}>
           <Image 
-            source={{ uri: image || 'No Image' }} 
+            source={{ uri: image || 'https://via.placeholder.com/400' }} 
             style={styles.image}
             resizeMode="contain"
           />
@@ -20,7 +19,8 @@ const ItemCard = ({ item, onClose }) => {
         <View style={styles.infoContainer}>
           <Text style={styles.title}>{name || 'No name'}</Text>
           <Text style={styles.price}>RS {parseInt(price || 15000).toLocaleString()}</Text>
-          <Text style={styles.color}>{color || 'Blue'}</Text>
+          <Text style={styles.color}>Color: {color || 'Blue'}</Text>
+          {shopName && <Text style={styles.shopName}>{shopName}</Text>}
           
           <TouchableOpacity style={styles.buyButton} onPress={() => router.push('/(Payment)/PaymentAdress')}>
             <Text style={styles.buyButtonText}>Buy Now</Text>
@@ -36,6 +36,12 @@ const ItemCard = ({ item, onClose }) => {
 };
 
 const styles = StyleSheet.create({
+  shopName: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 10,
+    opacity: 0.8,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -60,7 +66,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   image: {
-    width: '200%',
+    width: '200%', // Keeping original width as in your code
     height: '100%',
   },
   infoContainer: {

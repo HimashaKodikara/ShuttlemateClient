@@ -348,6 +348,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+    color:'white'
   },
   scrollView: {
     flex: 1,

@@ -143,7 +143,9 @@ const Home = () => {
           />
         )}
         ListHeaderComponent={() => (
+          
           <View>
+            
             <View style={styles.header}>
               <View>
                 <Text style={styles.welcomeText}>Welcome Back</Text>

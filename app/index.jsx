@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingBottom: 40,
+    paddingBottom: 10,
   },
   logoTextContainer: {
     flexDirection: 'row',
