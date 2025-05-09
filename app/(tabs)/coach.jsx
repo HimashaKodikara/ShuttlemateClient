@@ -14,7 +14,6 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import CoachCard from '../components/CoachCard';
-import Matches from '../components/Matches';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import Searchcoach from '../components/Searchcoach';
@@ -26,7 +25,6 @@ const Coaches = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showMatches, setShowMatches] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [trainingTypes, setTrainingTypes] = useState([]);
   const [selectedTrainingType, setSelectedTrainingType] = useState(null);
@@ -82,9 +80,7 @@ const Coaches = () => {
     setSelectedCoach(null);
   };
 
-  const toggleMatches = () => {
-    setShowMatches(!showMatches);
-  };
+ 
 
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
@@ -239,27 +235,7 @@ const Coaches = () => {
         />
       )}
 
-      <TouchableOpacity
-        style={styles.matchesButton}
-        onPress={toggleMatches}
-        activeOpacity={0.7}
-      >
-        <LottieView
-          source={require('../../assets/lottie/calendar.json')}
-          autoPlay
-          loop
-          style={{ width: 40, height: 40 }}
-          colorFilters={[
-            {
-              keypath: "**", // This targets all elements in the animation
-              color: "#FFFFFF" // White color
-            }
-          ]}
-        />
-      </TouchableOpacity>
-
-      {/* Matches component that shows when button is clicked */}
-      {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
+    
     </View>
   );
 };
@@ -275,11 +251,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   heading: {
-    fontSize: 30,
+    color: 'white',
+    fontSize: 21,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 16,
-    marginTop: 30,
+    marginTop:20,
+    padding: 5,
+    marginBottom:10,
+    textAlign:'center'
   },
   dropdownContainer: {
     marginBottom: 16,

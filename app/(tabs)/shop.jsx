@@ -1,8 +1,11 @@
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Modal } from 'react-native'
-import React, { useState, useEffect,useCallback } from 'react'
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, RefreshControl } from 'react-native'
+import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
-import ItemCard from '../components/ItemCard' // Import the ItemCard component
-import { useFocusEffect } from '@react-navigation/native';
+import ItemCard from '../components/ItemCard'
+import ShopCard from '../components/ShopCard'
+import { useFocusEffect } from '@react-navigation/native'
+import Icon from 'react-native-vector-icons/Feather'
+import API_BASE_URL from '../../server/api.config'
 
 const Shop = () => {
   const [items, setItems] = useState([])
@@ -10,19 +13,57 @@ const Shop = () => {
   const [error, setError] = useState(null)
   const [selectedItem, setSelectedItem] = useState(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  
+  // New states for shop selection
+  const [shops, setShops] = useState([])
+  const [selectedShopId, setSelectedShopId] = useState('')
+  const [selectedShopName, setSelectedShopName] = useState('Shop at the designated store')
+  const [isShopModalVisible, setIsShopModalVisible] = useState(false)
+  const [selectedShop, setSelectedShop] = useState(null)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  const onRefresh = async () => {
+    setRefreshing(true)
+    // Refresh data
+    await fetchShops()
+    await fetchItems()
+    setSelectedShopId('')
+    setSelectedShopName('Select a Shop')
+    setSelectedShop(null)
+    setIsDropdownOpen(false)
+    setRefreshing(false)
+  }
 
   useEffect(() => {
+    fetchShops()
     fetchItems()
   }, [])
+
+  const fetchShops = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/shops/`)
+      
+      if (response.data && response.data.shops && Array.isArray(response.data.shops)) {
+        setShops(response.data.shops)
+      } else if (Array.isArray(response.data)) {
+        setShops(response.data)
+      } else {
+        console.error('Unexpected API response format:', response.data)
+        setShops([])
+      }
+    } catch (err) {
+      console.error('Error fetching shops:', err)
+      setShops([])
+    }
+  }
 
   const fetchItems = async () => {
     try {
       setLoading(true)
-      const response = await axios.get('http://192.168.1.10:5000/api/items/')
+      const response = await axios.get(`${API_BASE_URL}/items/`)
       
-      // Process the categorized response to get a flat list of all items
       if (response.data && Array.isArray(response.data)) {
-        // Extract all items from all categories and flatten into a single array
         const allItems = response.data.reduce((acc, category) => {
           if (category.items && Array.isArray(category.items)) {
             return [...acc, ...category.items]
@@ -32,7 +73,6 @@ const Shop = () => {
         
         setItems(allItems)
       } else {
-        // If response is already a flat array, use it directly
         setItems(response.data)
       }
       
@@ -44,18 +84,104 @@ const Shop = () => {
     }
   }
 
-   useFocusEffect(
-      useCallback(() => {
-       
-        setIsModalVisible(false)
-       setSelectedItem(null)
-        
-        return () => {
+  useFocusEffect(
+    useCallback(() => {
+      setIsModalVisible(false)
+      setSelectedItem(null)
+      setIsShopModalVisible(false)
+      setIsDropdownOpen(false)
       
-        };
-      }, [])
-    );
-  
+      return () => {
+        // Cleanup if needed
+      }
+    }, [])
+  )
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen)
+  }
+
+  const handleShopSelection = async (shop) => {
+    setSelectedShopId(shop._id)
+    setSelectedShopName(shop.ShopName)
+    setIsDropdownOpen(false)
+    
+    try {
+      // Check if shop already has all the needed details to avoid extra API call
+      if (shop.brands && shop.categories && shop.items) {
+        setSelectedShop(shop)
+        setIsShopModalVisible(true)
+      } else {
+        // Fetch complete shop details if needed
+        const response = await axios.get(`${API_BASE_URL}/shops/shop/${shop._id}`)
+        // Check if response contains shop data directly or in a nested property
+        const shopData = response.data && response.data.shop ? response.data.shop : response.data
+        setSelectedShop(shopData)
+        setIsShopModalVisible(true)
+      }
+    } catch (err) {
+      console.error('Error fetching shop details:', err)
+    }
+  }
+
+  // Function to get a valid color code from color name
+  const getColorCode = (colorName) => {
+    const colorMap = {
+      // Basic colors
+      'red': '#FF0000',
+      'blue': '#0000FF',
+      'green': '#008000',
+      'yellow': '#FFFF00',
+      'orange': '#FFA500',
+      'purple': '#800080',
+      'pink': '#FFC0CB',
+      'brown': '#A52A2A',
+      'black': '#000000',
+      'white': '#FFFFFF',
+      'gray': '#808080',
+      'grey': '#808080',
+      'silver': '#C0C0C0',
+      'gold': '#FFD700',
+      
+      // Additional colors
+      'beige': '#F5F5DC',
+      'navy': '#000080',
+      'teal': '#008080',
+      'maroon': '#800000',
+      'olive': '#808000',
+      'aqua': '#00FFFF',
+      'lime': '#00FF00',
+      'coral': '#FF7F50',
+      'magenta': '#FF00FF',
+      'cyan': '#00FFFF',
+      'violet': '#EE82EE',
+      'indigo': '#4B0082',
+      'turquoise': '#40E0D0',
+      'crimson': '#DC143C',
+      'lavender': '#E6E6FA',
+      'tan': '#D2B48C',
+      'salmon': '#FA8072',
+      'khaki': '#F0E68C',
+    }
+    
+    // Check if color name exists in our map (case insensitive)
+    const lowerCaseColorName = colorName ? colorName.toLowerCase() : '';
+    
+    // Try exact match first
+    if (colorMap[lowerCaseColorName]) {
+      return colorMap[lowerCaseColorName];
+    }
+    
+    // Try partial match
+    for (const [key, value] of Object.entries(colorMap)) {
+      if (lowerCaseColorName.includes(key)) {
+        return value;
+      }
+    }
+    
+    // Default color if no match is found
+    return '#CCCCCC';
+  }
 
   const renderItem = ({ item }) => (
     <TouchableOpacity 
@@ -69,20 +195,31 @@ const Shop = () => {
       />
       <View style={styles.itemDetails}>
         <Text style={styles.itemName}>{item.name}</Text>
+        {item.color && (
+          <View style={styles.colorContainer}>
+            <View 
+              style={[
+                styles.colorDot, 
+                { backgroundColor: getColorCode(item.color) }
+              ]} 
+            />
+          </View>
+        )}
         <Text style={styles.itemPrice}>Rs.{item.price.toLocaleString()}</Text>
-        {item.color && <Text style={styles.itemColor}>{item.color}</Text>}
-        
       </View>
     </TouchableOpacity>
   )
 
   const handleItemPress = (item) => {
- 
     setSelectedItem({
       name: item.name,
       price: item.price,
       color: item.color,
-      image: item.itemphoto 
+      image: item.itemphoto,
+      brand: item.brand,
+      features: item.features,
+      availableqty: item.availableqty,
+      shopName: item.shopName
     })
     setIsModalVisible(true)
   }
@@ -92,10 +229,15 @@ const Shop = () => {
     setSelectedItem(null)
   }
 
+  const closeShopModal = () => {
+    setIsShopModalVisible(false)
+    setSelectedShop(null)
+  }
+
   if (loading) {
     return (
       <View style={styles.centered}>
-        <Text>Loading items...</Text>
+        <ActivityIndicator size="large" color="#4A90E2" />
       </View>
     )
   }
@@ -114,20 +256,75 @@ const Shop = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Shop Now</Text>
+      
+      {/* Custom Dropdown for Shop Selection */}
+      <View style={styles.dropdownContainer}>
+       
+        <TouchableOpacity 
+          style={styles.dropdownSelector} 
+          onPress={toggleDropdown}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.dropdownText}>{selectedShopName}</Text>
+          <Icon name={isDropdownOpen ? "chevron-up" : "chevron-down"} size={20} color="#fff" />
+        </TouchableOpacity>
+        
+        {isDropdownOpen && (
+          <View style={styles.dropdownList}>
+            <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
+              {Array.isArray(shops) && shops.length > 0 ? (
+                shops.map((shop) => {
+                  // Check if shop data is valid
+                  if (!shop || !shop._id || !shop.ShopName) {
+                    return null
+                  }
+                  
+                  return (
+                    <TouchableOpacity
+                      key={shop._id}
+                      style={styles.dropdownItem}
+                      onPress={() => handleShopSelection(shop)}
+                    >
+                      <Image 
+                        source={{ uri: shop.ShopPhoto || 'https://via.placeholder.com/30' }} 
+                        style={styles.shopIcon} 
+                        resizeMode="cover"
+                      />
+                      <Text style={styles.dropdownItemText}>{shop.ShopName}</Text>
+                    </TouchableOpacity>
+                  )
+                })
+              ) : (
+                <View style={styles.emptyShopsList}>
+                  <Text style={styles.emptyShopsText}>No shops available</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+      
       <FlatList
         data={items}
         renderItem={renderItem}
         keyExtractor={item => item._id}
         numColumns={2}
         contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#4A90E2']}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text>No items found</Text>
+            <Text style={{color: '#fff'}}>No items found</Text>
           </View>
         }
       />
       
-
+      {/* Item Detail Modal */}
       <Modal
         visible={isModalVisible}
         transparent={true}
@@ -136,6 +333,15 @@ const Shop = () => {
       >
         <ItemCard item={selectedItem} onClose={closeModal} />
       </Modal>
+
+      {/* Shop Detail Modal */}
+      {selectedShop && (
+        <ShopCard 
+          visible={isShopModalVisible}
+          onRequestClose={closeShopModal}
+          shop={selectedShop}
+        />
+      )}
     </View>
   )
 }
@@ -145,14 +351,80 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 5,
     backgroundColor: '#0A0A1A',
-    paddingBottom:10
+    paddingBottom: 0
   },
   header: {
-    fontSize: 30,
+    color: 'white',
+    fontSize: 21,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginTop: 30,
+    padding: 5,
+    textAlign: 'center'
+  },
+  dropdownContainer: {
+    marginBottom: 20,
+    paddingHorizontal: 5,
+    zIndex: 10,
+    position: 'relative',
+    marginTop: 10
+  },
+  dropdownLabel: {
     color: '#fff',
-    marginTop:30
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  dropdownSelector: {
+    backgroundColor: '#1A1A2E',
+    borderRadius: 10,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  dropdownList: {
+    position: 'absolute',
+    top: 85, // Positioned below the selector
+    left: 5,
+    right: 5,
+    backgroundColor: '#1A1A2E',
+    borderRadius: 10,
+    maxHeight: 500,
+    borderWidth: 1,
+    borderColor: '#2A2A3E',
+    zIndex: 20,
+    elevation: 5,
+  },
+  dropdownScroll: {
+    maxHeight: 500,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2A2A3E',
+  },
+  dropdownItemText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 10,
+  },
+  shopIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+  },
+  emptyShopsList: {
+    padding: 15,
+    alignItems: 'center',
+  },
+  emptyShopsText: {
+    color: '#aaa',
+    fontSize: 14,
   },
   listContainer: {
     paddingBottom: 20,
@@ -172,6 +444,8 @@ const styles = StyleSheet.create({
   itemImage: {
     width: '100%',
     height: 120,
+    opacity: 0.9
+    
   },
   itemDetails: {
     padding: 12,
@@ -180,29 +454,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
-    color:'#fff'
+    color: '#fff'
   },
   itemPrice: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#2c6e49',
+    color: '#fff',
     marginBottom: 4,
+  },
+  // New color container style for the dot and text
+  colorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  // Color dot style
+  colorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   itemColor: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
-  },
-  shopName: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 4,
+    color: '#fff',
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#0A0A1A'
   },
   errorText: {
     color: 'red',
@@ -218,6 +502,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '500',
   }
-});
+})
 
 export default Shop

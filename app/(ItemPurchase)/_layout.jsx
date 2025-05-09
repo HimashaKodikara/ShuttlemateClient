@@ -30,7 +30,7 @@ const TabsLayout = () => {
           borderTopWidth: 0,
           borderTopColor: "#232533",
 
-          height: 55,
+          height: 0,
 
         }
       }}
@@ -42,14 +42,7 @@ const TabsLayout = () => {
           title: 'Items',
           headerShown: false,
 
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              icon={icons.shop}
-              color={color}
-              name="Items"
-              focused={focused}
-            />
-          ),
+         
         }}
       />
 

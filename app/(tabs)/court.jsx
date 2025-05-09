@@ -17,7 +17,6 @@ import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import LottieView from 'lottie-react-native';
-import Matches from '../components/Matches';
 import { useRoute } from '@react-navigation/native';
 
 const Courts = () => {
@@ -30,7 +29,7 @@ const Courts = () => {
   const [areas, setAreas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showMatches, setShowMatches] = useState(false);
+
   const [selectedCourtId, setSelectedCourtId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedArea, setSelectedArea] = useState('All Areas');
@@ -112,9 +111,7 @@ const Courts = () => {
       });
   };
 
-  const toggleMatches = () => {
-    setShowMatches(!showMatches);
-  };
+
 
   const selectArea = (area) => {
     setSelectedArea(area);
@@ -296,27 +293,7 @@ const Courts = () => {
         )}
       </ScrollView>
       
-      <TouchableOpacity
-        style={styles.matchesButton}
-        onPress={toggleMatches}
-        activeOpacity={0.7}
-      >
-        <LottieView
-          source={require('../../assets/lottie/calendar.json')}
-          autoPlay
-          loop
-          style={{ width: 40, height: 40 }}
-          colorFilters={[
-            {
-              keypath: "**", // This targets all elements in the animation
-              color: "#FFFFFF" // White color
-            }
-          ]}
-        />
-      </TouchableOpacity>
-      
-      {/* Matches component that shows when button is clicked */}
-      {showMatches && <Matches visible={showMatches} onClose={toggleMatches} />}
+     
 
       {/* Area selection modal */}
       <Modal
@@ -370,15 +347,17 @@ const styles = StyleSheet.create({
     paddingBottom:50
   },
   header: {
-    padding: 16,
-    paddingTop: 50,
+    padding: 10,
+   
   },
   headerTitle: {
-    fontSize: 28,
+     color: 'white',
+    fontSize: 21,
     fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 16,
-    letterSpacing: 0.5,
+    marginTop:30,
+    padding: 5,
+    marginBottom:10,
+    textAlign:'center'
   },
   dropdown: {
     flexDirection: 'row',

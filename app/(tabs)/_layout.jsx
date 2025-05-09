@@ -3,7 +3,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import icons from '../../constants/icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
+import shuttle from '../../assets/icons/shuttle.png'
 const TabIcon = ({ icon, color, name, focused }) => {
   return (
     <View style={styles.iconContainer}>
@@ -30,12 +30,12 @@ const TabsLayout = () => {
             borderTopWidth: 0,
             borderTopColor: "#232533",
             height: 55,
-            marginHorizontal: 16, 
+            marginHorizontal: 10, 
             borderRadius: 25,   
             position: 'absolute',
             bottom: 10,
             paddingTop: 10,         
-            paddingHorizontal: 10, 
+            paddingHorizontal: 3, 
             // Shadow for iOS
             shadowColor: "#000",
             shadowOffset: {
@@ -117,6 +117,21 @@ const TabsLayout = () => {
             ),
           }}
         />
+        <Tabs.Screen
+          name="matches"
+          options={{
+            title: 'Matches',
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                icon={shuttle}
+                color={color}
+                name="Match"
+                focused={focused}
+              />
+            ),
+          }}
+        />
       </Tabs>
     </View>
   );
@@ -137,7 +152,7 @@ const styles = StyleSheet.create({
   icon: {
     width: 22,
     height: 22,
-    marginTop: 6
+    marginTop: 0
   },
   text: {
     fontSize: 10,

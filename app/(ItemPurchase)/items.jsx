@@ -18,18 +18,91 @@ const Items = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [shopData, setShopData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  
+  const [shopName, setShopName] = useState('');
+
   // Add state for the ItemCard modal
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Function to get a valid color code from color name
+  const getColorCode = (colorName) => {
+    const colorMap = {
+      // Basic colors
+      'red': '#FF0000',
+      'blue': '#0000FF',
+      'green': '#008000',
+      'yellow': '#FFFF00',
+      'orange': '#FFA500',
+      'purple': '#800080',
+      'pink': '#FFC0CB',
+      'brown': '#A52A2A',
+      'black': '#000000',
+      'white': '#FFFFFF',
+      'gray': '#808080',
+      'grey': '#808080',
+      'silver': '#C0C0C0',
+      'gold': '#FFD700',
+
+      // Additional colors
+      'beige': '#F5F5DC',
+      'navy': '#000080',
+      'teal': '#008080',
+      'maroon': '#800000',
+      'olive': '#808000',
+      'aqua': '#00FFFF',
+      'lime': '#00FF00',
+      'coral': '#FF7F50',
+      'magenta': '#FF00FF',
+      'cyan': '#00FFFF',
+      'violet': '#EE82EE',
+      'indigo': '#4B0082',
+      'turquoise': '#40E0D0',
+      'crimson': '#DC143C',
+      'lavender': '#E6E6FA',
+      'tan': '#D2B48C',
+      'salmon': '#FA8072',
+      'khaki': '#F0E68C',
+    }
+
+    // Check if color name exists in our map (case insensitive)
+    const lowerCaseColorName = colorName ? colorName.toLowerCase() : '';
+
+    // Try exact match first
+    if (colorMap[lowerCaseColorName]) {
+      return colorMap[lowerCaseColorName];
+    }
+
+    // Try partial match
+    for (const [key, value] of Object.entries(colorMap)) {
+      if (lowerCaseColorName.includes(key)) {
+        return value;
+      }
+    }
+
+    // Default color if no match is found
+    return '#CCCCCC';
+  }
+
+  // Function to fetch shop details
+  const fetchShopDetails = async (id) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/shops/${id}`);
+      setShopData(response.data);
+      setShopName(response.data.shopName);
+    } catch (err) {
+    
+    }
+  };
 
   // Function to load shop data
   const loadShopData = async () => {
     try {
       setLoading(true);
-      
-      // If we have a shopId, fetch items by shop ID
+
+      // If we have a shopId, fetch shop details
       if (shopId) {
+        fetchShopDetails(shopId);
+        
         // Fetch items categorized by shop ID
         const itemsResponse = await axios.get(`${API_BASE_URL}/items/shop/${shopId}`);
         const categorizedItems = itemsResponse.data;
@@ -53,13 +126,22 @@ const Items = () => {
               color: item.color,
               image: item.itemphoto,
               category: category.categoryName,
-              categoryId: category.categoryId
+              brand: item.brand,
+              features: item.features,
+              availableqty: item.availableqty,
+              categoryId: category.categoryId,
+              shopName: item.shopName
             });
           });
         });
         
         setProducts(allItems);
         setFilteredProducts(allItems);
+        
+        // Update shop name from products if available and shop details fetching failed
+        if (allItems.length > 0 && !shopName && allItems[0].shopName) {
+          setShopName(allItems[0].shopName);
+        }
         
       } else {
         // If no specific shop, fetch all items
@@ -128,7 +210,7 @@ const Items = () => {
 
   const handleCategorySelect = async (category) => {
     setSelectedCategory(category);
-    
+
     if (category !== 'All' && shopId) {
       try {
         setLoading(true);
@@ -181,7 +263,7 @@ const Items = () => {
     useCallback(() => {
       setModalVisible(false);
       setSelectedProduct(null);
-      
+
       return () => {
         // Cleanup function
       };
@@ -217,11 +299,11 @@ const Items = () => {
           style={styles.backButton}
           onPress={handleBackPress}
         >
-                   <Feather name="arrow-left" size={24} color="white" />
+          <Feather name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Shop Now</Text>
+        <Text style={styles.headerTitle}>{shopName || 'All Products'}</Text>
       </View>
-      
+
       <View style={styles.categoriesContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesList}>
           {categories.map(category => (
@@ -281,12 +363,17 @@ const Items = () => {
               <View style={styles.productInfo}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
-                  {product.color && (
-                    <View style={styles.colorContainer}>
-                      <View style={[styles.colorDot, { backgroundColor: product.color }]} />
-                    </View>
-                  )}
                 </View>
+                {product.color && (
+                  <View style={styles.colorContainer}>
+                    <View 
+                      style={[
+                        styles.colorDot, 
+                        { backgroundColor: getColorCode(product.color) }
+                      ]} 
+                    />
+                  </View>
+                )}
                 <Text style={styles.productPrice}>Rs. {parseInt(product.price).toLocaleString()}</Text>
                 
                 {!shopId && product.shopName && (
@@ -339,7 +426,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: 'white',
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
     flex: 1,
@@ -381,7 +468,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 12,
     overflow: 'hidden',
-    backgroundColor: 'white',
+    backgroundColor: '#1A1A2E',
   },
   imageContainer: {
     height: 150,
@@ -404,31 +491,39 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   productName: {
-    color: 'black',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#fff'
   },
   productPrice: {
-    color: 'black',
-    fontSize: 14,
-    fontWeight:'400',
-    marginTop: 4,
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
   },
   shopName: {
     color: '#666',
     fontSize: 12,
     marginTop: 4,
   },
+  // Updated color related styles
   colorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginBottom: 2,
   },
   colorDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    marginRight: 4,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  itemColor: {
+    fontSize: 14,
+    color: '#aaa',
   },
   emptyContainer: {
     flex: 1,
@@ -455,7 +550,7 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontWeight: 'bold',
-  }
+  },
 });
 
 export default Items;
