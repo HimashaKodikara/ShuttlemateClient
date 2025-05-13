@@ -31,7 +31,7 @@ const SearchInput = () => {
           
         }}
       >
-        <Image source={Search} style={{ width: 25, height: 25, marginTop: 7 }} />
+        <Image source={Search} style={{ width: 20, height: 20, marginTop: 7 }} />
       </TouchableOpacity>
     </View>
   );
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     borderWidth: 2,
     width: '100%',
-    height: 50,
+    height: 45,
     paddingHorizontal: 16,
     backgroundColor: 'gray',
     borderRadius: 20,

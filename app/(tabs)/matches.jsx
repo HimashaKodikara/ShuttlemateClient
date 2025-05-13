@@ -230,14 +230,14 @@ const styles = StyleSheet.create({
   header: {
   
     alignItems: 'center',
-    padding: 16,
+    padding: 8,
   
   },
   headerTitle: {
    color: 'white',
     fontSize: 21,
     fontWeight: 'bold',
-    marginTop:30,
+    marginTop:20,
     padding: 5,
  
     textAlign:'center'

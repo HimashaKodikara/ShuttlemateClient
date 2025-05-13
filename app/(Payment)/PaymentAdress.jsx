@@ -16,92 +16,84 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import icons from '../../constants/icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 
-
-
-const PaymentAddress = ({ navigation }) => {
+const PaymentAddress = () => {
+  const params = useLocalSearchParams();
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [streetAddress, setStreetAddress] = useState('');
-  const [state, setState] = useState('');
-  const [city, setCity] = useState('');
+  const [address1, setAddress1] = useState('');
+  const [address2, setAddress2] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [isDefault, setIsDefault] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [firebaseUid, setFirebaseUid] = useState(null);
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
 
+  // Get the itemId from route params
+  const itemId = params?.itemId;
   
   // Check login status and fetch user data on component mount
-useEffect(() => {
-  const checkLoginAndFetchData = async () => {
-    try {
-      setIsCheckingLogin(true);
-      
-      // Get user ID from AsyncStorage
-      const storedUserId = await AsyncStorage.getItem('firebaseUid');
-      
-
-      
-      if (!storedUserId) {
-        console.log('No user ID found in storage');
+  useEffect(() => {
+    const checkLoginAndFetchData = async () => {
+      try {
+        setIsCheckingLogin(true);
+        
+        // Get user ID from AsyncStorage
+        const storedUserId = await AsyncStorage.getItem('firebaseUid');
+        
+        if (!storedUserId) {
+          console.log('No user ID found in storage');
+          Alert.alert(
+            'Login Required',
+            'Please log in to manage your payment address',
+            [
+              {
+                text: 'Cancel',
+                onPress: () => router.back(),
+                style: 'cancel',
+              },
+              {
+                text: 'Go to Login',
+                onPress: () => router.replace('/sign-in'),
+              },
+            ]
+          );
+          return;
+        }
+        
+        setFirebaseUid(storedUserId);
+        
+        // Fetch user data using the ID
+        const response = await axios.get(`${API_BASE_URL}/user/${storedUserId}`);
+        const userData = response.data;
+        
+        if (userData) {
+          setPhoneNumber(userData.phoneNumber || '');
+          setAddress1(userData.address1 || '');
+          setAddress2(userData.address2 || '');
+          setPostalCode(userData.postalCode || '');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        console.log('Error response:', error.response);
         Alert.alert(
-          'Login Required',
-          'Please log in to manage your payment address',
-          [
-            {
-              text: 'Cancel',
-              onPress: () => router.back(),
-              style: 'cancel',
-            },
-            {
-              text: 'Go to Login',
-              onPress: () => router.replace('/sign-in'),
-            },
-          ]
+          'Error',
+          'Failed to load your address information. Please try again later.'
         );
-        return;
+      } finally {
+        setIsCheckingLogin(false);
       }
-      
-      setFirebaseUid(storedUserId);
-      
-      // Fetch user data using the ID
+    };
 
-      const response = await axios.get(`${API_BASE_URL}/user/${storedUserId}`);
-      const userData = response.data;
-      
-   
-      
-      if (userData) {
-        setPhoneNumber(userData.phoneNumber || '');
-        setStreetAddress(userData.streetAddress || '');
-        setState(userData.state || '');
-        setCity(userData.city || '');
-        setPostalCode(userData.postalCode || '');
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      console.log('Error response:', error.response); // Add this log
-      Alert.alert(
-        'Error',
-        'Failed to load your address information. Please try again later.'
-      );
-    } finally {
-      setIsCheckingLogin(false);
-    }
-  };
-
-  checkLoginAndFetchData();
-}, []);
+    checkLoginAndFetchData();
+  }, []);
 
   const handleSave = async () => {
     // First, check if firebaseUid exists
- 
-    
     if (!firebaseUid) {
       Alert.alert('Error', 'User ID not found. Please log in again.');
       return;
@@ -113,13 +105,10 @@ useEffect(() => {
       // Prepare data to update
       const userData = {
         phoneNumber,
-        streetAddress,
-        state,
-        city,
+        address1,
+        address2,
         postalCode
       };
-  
- 
   
       // Make API call to update user data
       const response = await axios.put(
@@ -132,16 +121,19 @@ useEffect(() => {
         }
       );
   
-      
-  
       if (response.status === 200) {
         Alert.alert('Success', 'Payment address updated successfully');
-        // Navigate back or to the next screen
-        if (navigation) navigation.goBack();
-        // Or use router
-        // router.back();
+        
+        // Navigate to ItemCheckout with the itemId from params
+        if (itemId) {
+          router.push({
+            pathname: '/(Payment)/ItemCheckout',
+            params: { itemId: itemId }
+          });
+        } else {
+          router.back();
+        }
       }
-        router.push('/PaymentCard');
     } catch (error) {
       console.error('Error updating user data:', error);
       console.log('Error response:', error.response);
@@ -222,32 +214,22 @@ useEffect(() => {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Street Address</Text>
+                <Text style={styles.label}>Address Line 1</Text>
                 <TextInput
                   style={styles.input}
-                  value={streetAddress}
-                  onChangeText={setStreetAddress}
+                  value={address1}
+                  onChangeText={setAddress1}
                   placeholder="Enter street address"
                 />
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>State</Text>
+                <Text style={styles.label}>Address Line 2</Text>
                 <TextInput
                   style={styles.input}
-                  value={state}
-                  onChangeText={setState}
-                  placeholder="Enter state"
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.label}>City</Text>
-                <TextInput
-                  style={styles.input}
-                  value={city}
-                  onChangeText={setCity}
-                  placeholder="Enter city"
+                  value={address2}
+                  onChangeText={setAddress2}
+                  placeholder="Enter Street Address"
                 />
               </View>
 
@@ -310,9 +292,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     paddingHorizontal: 16,
-    marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E5E5',
+    marginTop: 30,
+   
+    
   },
   backButton: {
     width: 40,
@@ -334,6 +316,7 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     paddingBottom: 20,
+    marginTop:30
   },
   formContainer: {
     flex: 1,
@@ -346,7 +329,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     color: 'white',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   input: {
     backgroundColor: '#FFFFFF',
@@ -374,8 +357,8 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 30,  // Add some bottom margin for scrolling space
+    marginTop: 40,
+    marginBottom: 0,  // Add some bottom margin for scrolling space
   },
   saveButtonText: {
     color: '#FFFFFF',

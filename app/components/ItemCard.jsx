@@ -4,17 +4,18 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; // Make sure to install expo-vector-icons
 import shop from '../../assets/icons/shop.png'
 const ItemCard = ({ item, onClose }) => {
-  const { 
-    name, 
-    price, 
-    color, 
-    image, 
-    shopName, 
-    brand, 
+  const {
+    _id,
+    name,
+    price,
+    color,
+    image,
+    shopName,
+    brand,
     features,
     availableqty
   } = item || {};
-  
+
   // Convert features string to array if it exists
   const featuresList = features ? features.split(',').map(feature => feature.trim()) : [];
 
@@ -23,22 +24,22 @@ const ItemCard = ({ item, onClose }) => {
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.card}>
           {/* Close button positioned at top right */}
-          <TouchableOpacity 
-            style={styles.closeIconButton} 
+          <TouchableOpacity
+            style={styles.closeIconButton}
             onPress={onClose}
             hitSlop={{ top: 20, right: 20, bottom: 20, left: 20 }}
           >
             <Ionicons name="close-circle" size={32} color="#FFFFFF" />
           </TouchableOpacity>
-          
+
           <View style={styles.imageContainer}>
-            <Image 
-              source={{ uri: image || 'https://via.placeholder.com/400' }} 
+            <Image
+              source={{ uri: image || 'https://via.placeholder.com/400' }}
               style={styles.image}
               resizeMode="contain"
             />
           </View>
-          
+
           <View style={styles.infoContainer}>
             {/* Product name and brand */}
             <View style={styles.headingRow}>
@@ -48,12 +49,7 @@ const ItemCard = ({ item, onClose }) => {
             {/* Shop name with icon */}
             {shopName && (
               <View style={styles.shopRow}>
-                 <Image 
-              source={shop} 
-              style={styles.shopimage}
-              resizeMode="contain"
-            />
-                
+                   <Ionicons name="storefront-outline" size={18} color="#777" style={styles.shopIcon} />
                 <Text style={styles.shopName}>{shopName}</Text>
               </View>
             )}
@@ -62,36 +58,35 @@ const ItemCard = ({ item, onClose }) => {
               <Text style={styles.price}>Rs. {parseInt(price || 15000).toLocaleString()}</Text>
               {availableqty && (
                 <View style={[
-                  styles.availabilityBadge, 
+                  styles.availabilityBadge,
                   parseInt(availableqty) > 0 ? styles.inStock : styles.outOfStock
                 ]}>
                   <Text style={styles.availabilityText}>
-                    {parseInt(availableqty) > 0 
-                      ? `${availableqty} in stock` 
+                    {parseInt(availableqty) > 0
+                      ? `${availableqty} in stock`
                       : 'Out of stock'}
                   </Text>
                 </View>
               )}
             </View>
-            
-            
-            
+
+ 
             {/* Color with visual indicator */}
             {color && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Color:</Text>
                 <View style={styles.colorSection}>
-                  <View 
+                  <View
                     style={[
-                      styles.colorDot, 
+                      styles.colorDot,
                       { backgroundColor: color.toLowerCase() }
-                    ]} 
+                    ]}
                   />
                   <Text style={styles.detailValue}>{color}</Text>
                 </View>
               </View>
             )}
-            
+
             {/* Features list */}
             {featuresList.length > 0 && (
               <View style={styles.featuresContainer}>
@@ -104,20 +99,23 @@ const ItemCard = ({ item, onClose }) => {
                 ))}
               </View>
             )}
-            
+
             {/* Call-to-action buttons */}
             <View style={styles.actionButtonsContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cartButton}
                 onPress={onClose}
               >
-               
+
                 <Text style={styles.cartButtonText}>Close</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.buyButton} 
-                onPress={() => router.push('/(Payment)/PaymentAdress')}
+
+              <TouchableOpacity
+                style={styles.buyButton}
+                onPress={() => router.push({
+                  pathname: '/(Payment)/PaymentAdress',
+                  params: { itemId: _id }
+                })}
               >
                 <Text style={styles.buyButtonText}>Buy Now</Text>
               </TouchableOpacity>
@@ -140,10 +138,10 @@ const styles = StyleSheet.create({
     width: '95%',
     maxHeight: '95%',
   },
-  shopimage:{
-  height:"16",
-  width:16
-},
+  shopimage: {
+    height: "16",
+    width: 16
+  },
 
   card: {
     width: '100%',
@@ -283,7 +281,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   cartButton: {
-    backgroundColor: '#333344',
+    backgroundColor: '#0F0F1A',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -291,9 +289,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     flex: 1,
     marginRight: 10,
+    borderWidth: 2,
+    borderColor: 'white',
   },
   cartButtonText: {
-    color: '#FFFFFF',
+    color: 'white',
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 6,

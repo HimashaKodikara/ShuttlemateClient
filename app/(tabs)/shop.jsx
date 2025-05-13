@@ -112,9 +112,9 @@ const Shop = () => {
         setSelectedShop(shop)
         setIsShopModalVisible(true)
       } else {
-        // Fetch complete shop details if needed
+  
         const response = await axios.get(`${API_BASE_URL}/shops/shop/${shop._id}`)
-        // Check if response contains shop data directly or in a nested property
+        
         const shopData = response.data && response.data.shop ? response.data.shop : response.data
         setSelectedShop(shopData)
         setIsShopModalVisible(true)
@@ -124,10 +124,10 @@ const Shop = () => {
     }
   }
 
-  // Function to get a valid color code from color name
+  
   const getColorCode = (colorName) => {
     const colorMap = {
-      // Basic colors
+      
       'red': '#FF0000',
       'blue': '#0000FF',
       'green': '#008000',
@@ -179,7 +179,7 @@ const Shop = () => {
       }
     }
     
-    // Default color if no match is found
+  
     return '#CCCCCC';
   }
 
@@ -212,6 +212,7 @@ const Shop = () => {
 
   const handleItemPress = (item) => {
     setSelectedItem({
+      _id:item._id,
       name: item.name,
       price: item.price,
       color: item.color,
@@ -324,7 +325,7 @@ const Shop = () => {
         }
       />
       
-      {/* Item Detail Modal */}
+    
       <Modal
         visible={isModalVisible}
         transparent={true}

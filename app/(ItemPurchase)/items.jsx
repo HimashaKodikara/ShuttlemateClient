@@ -120,7 +120,7 @@ const Items = () => {
         categorizedItems.forEach(category => {
           category.items.forEach(item => {
             allItems.push({
-              id: item._id,
+              _id: item._id,
               name: item.name,
               price: item.price,
               color: item.color,
@@ -161,7 +161,7 @@ const Items = () => {
         categorizedItems.forEach(category => {
           category.items.forEach(item => {
             allItems.push({
-              id: item._id,
+              _id: item._id,
               name: item.name,
               price: item.price,
               color: item.color,
@@ -219,7 +219,7 @@ const Items = () => {
         if (categoryItem && categoryItem.categoryId) {
           const response = await axios.get(`${API_BASE_URL}/items/category/${categoryItem.categoryId}`);
           const categoryItems = response.data.map(item => ({
-            id: item._id,
+            _id: item._id,
             name: item.name,
             price: item.price,
             color: item.color,
