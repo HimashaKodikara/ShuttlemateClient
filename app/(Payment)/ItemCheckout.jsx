@@ -86,7 +86,7 @@ const ItemCheckout = () => {
   const handleCheckout = () => {
     // Pass the selected item and quantity to payment screen
     router.push({
-      pathname: '/(Payment)/PaymentAdress',
+      pathname: '/(Payment)/PaymentCard',
       params: { 
         itemId: item.id,
         quantity: quantity,
@@ -129,7 +129,9 @@ const ItemCheckout = () => {
   }
 
   const maxQuantityReached = quantity >= item.availableQuantity;
-  const totalAmount = item.price * quantity;
+  const dilivery = 500;
+  const Itemprice = item.price * quantity
+  const totalAmount = Itemprice + dilivery;
 
   return (
     <View style={styles.container}>
@@ -232,6 +234,10 @@ const ItemCheckout = () => {
           <Text style={styles.summaryLabel}>Quantity:</Text>
           <Text style={styles.summaryValue}>x {quantity}</Text>
         </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Dilivery in Colombo</Text>
+          <Text style={styles.summaryValue}>500</Text>
+        </View>
         <View style={styles.divider} />
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total Amount:</Text>
@@ -250,7 +256,7 @@ const ItemCheckout = () => {
           onPress={handleCheckout}
         >
           <Text style={styles.checkoutButtonText}>Proceed to Payment</Text>
-          <Ionicons name="arrow-forward" size={20} color="#fff" />
+
         </TouchableOpacity>
       </View>
     </View>
@@ -267,7 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
@@ -547,14 +553,14 @@ const styles = StyleSheet.create({
   },
   actionButtonsContainer: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 10,
     backgroundColor: '#0A0A1A',
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
   addToCartButton: {
     flex: 1,
-    height: 48,
+    height: 39,
     flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#fff',
@@ -571,7 +577,7 @@ const styles = StyleSheet.create({
   },
   checkoutButton: {
     flex: 2,
-    height: 48,
+    height: 39,
     flexDirection: 'row',
     backgroundColor: '#1F3B8B',
     borderRadius: 8,

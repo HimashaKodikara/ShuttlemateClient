@@ -28,6 +28,12 @@
     },
     "plugins": [
       "expo-router",
+     [
+      "@stripe/stripe-react-native",
+      {
+          "publishableKey":"pk_test_51QJef7RwP0CS6vlpJKa4aIbmfRJdUMqt8K4Lm1dBEM63cbBBvBgHLbpblPVZND1G7iNtTVhNEqCqk1YcFVgWFlqL0084kYVZX8"
+      }
+     ],
       "expo-font",
       "expo-video",
       [

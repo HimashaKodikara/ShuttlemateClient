@@ -21,6 +21,8 @@ import icons from '../../constants/icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
+import { Ionicons } from '@expo/vector-icons';
+
 
 const PaymentAddress = () => {
   const params = useLocalSearchParams();
@@ -181,11 +183,8 @@ const PaymentAddress = () => {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Image
-            source={icons.back}
-            style={styles.backIcon}
-            resizeMode="contain"
-          />
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
+
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment Address</Text>
         <View style={styles.backButton} />
