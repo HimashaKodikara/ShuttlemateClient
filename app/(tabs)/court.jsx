@@ -347,14 +347,14 @@ const styles = StyleSheet.create({
     paddingBottom:50
   },
   header: {
-    padding: 10,
+    padding: 7,
    
   },
   headerTitle: {
      color: 'white',
     fontSize: 21,
     fontWeight: 'bold',
-    marginTop:30,
+    marginTop:20,
     padding: 5,
     marginBottom:10,
     textAlign:'center'
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1.5,

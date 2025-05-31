@@ -176,7 +176,7 @@ const CoachCard = ({ coach, visible, onRequestClose }) => {
               onPress={() => setShowAvailability(!showAvailability)}
             >
               <Text style={styles.availabilityButtonText}>
-                {showAvailability ? 'Hide Availability' : 'View Availability & Book'}
+                {showAvailability ? 'Hide Availability' : 'View Availability'}
               </Text>
             </TouchableOpacity>
 

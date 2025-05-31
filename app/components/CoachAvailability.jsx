@@ -5,9 +5,12 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import API_BASE_URL from '../../server/api.config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CoachAvailability = ({ coach, onBooking }) => {
   // Get current date and format it as YYYY-MM-DD
@@ -21,70 +24,309 @@ const CoachAvailability = ({ coach, onBooking }) => {
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState(formatDate(today));
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
-  
+  const [availability, setAvailability] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
+  const [userId, setUserId] = useState(null);
+
   // Generate dates for the next 7 days
   const weekDates = Array(7)
     .fill(0)
     .map((_, index) => {
       const date = new Date();
       date.setDate(today.getDate() + index);
-      
+
       return {
         date: formatDate(date),
         day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
+        dayNum: date.getDay(), // 0-6 representing Sunday-Saturday
         dayOfMonth: date.getDate(),
       };
     });
 
-  // Mock data for coach availability - in a real app, this would come from a backend
-  // This would be fetched based on the coach ID and selected date
-  const mockAvailability = {
-    // Format: { [date]: [timeSlots] }
+  // Fetch user data from session/storage
+  const fetchUserData = async () => {
+    try {
+      // Get firebaseUid from AsyncStorage (session)
+      const firebaseUid = await AsyncStorage.getItem('firebaseUid');
+      
+      if (!firebaseUid) {
+        console.error('No firebaseUid found in session');
+        Alert.alert(
+          'Login Required',
+          'Please log in to book a coaching session',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+            },
+            {
+              text: 'Go to Login',
+              onPress: () => {
+                // You may need to adjust this navigation based on your app's structure
+                // If using React Navigation, you might use navigation.navigate('SignIn')
+                // Current implementation assumes you have a router object like in your example
+                if (typeof router !== 'undefined' && router.replace) {
+                  router.replace('/sign-in');
+                }
+              },
+            },
+          ]
+        );
+        return null;
+      }
+      
+      // Use the user endpoint to get user data based on firebaseUid
+      const response = await axios.get(`${API_BASE_URL}/user/${firebaseUid}`);
+      
+      if (response.data && response.data._id) {
+        setUserId(response.data._id);
+        return response.data._id;
+      } else {
+        console.error('User data not found or incomplete');
+        return null;
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      console.log('Error response:', err.response);
+      Alert.alert(
+        'Error',
+        'Failed to load your user information. Please try again later.'
+      );
+      return null;
+    }
   };
-  
-  // Create mock data for each day
-  weekDates.forEach(dayInfo => {
-    mockAvailability[dayInfo.date] = [
-      // Generate some random time slots for each day
-      { id: `${dayInfo.date}-1`, start: '09:00', end: '10:00', available: Math.random() > 0.3 },
-      { id: `${dayInfo.date}-2`, start: '10:00', end: '11:00', available: Math.random() > 0.5 },
-      { id: `${dayInfo.date}-3`, start: '14:00', end: '15:00', available: Math.random() > 0.3 },
-      { id: `${dayInfo.date}-4`, start: '15:00', end: '16:00', available: Math.random() > 0.4 },
-      { id: `${dayInfo.date}-5`, start: '16:00', end: '17:00', available: Math.random() > 0.2 },
-    ].filter((_, idx) => {
-      // Randomly remove some slots to make the schedule look more realistic
-      return Math.random() > 0.3 || idx < 2; // Ensure at least 2 slots per day
+
+  // Fetch availability data from backend
+  const fetchAvailability = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${API_BASE_URL}/Coachers/${coach._id}/availability`
+      );
+
+      if (response.data.success) {
+        // Process the availability data
+        processAvailabilityData(response.data.data);
+      } else {
+        setError('Failed to fetch availability data');
+      }
+    } catch (err) {
+      setError('Error connecting to the server');
+      console.error('Error fetching coach availability:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch user data and availability when component mounts
+    const initialize = async () => {
+      setLoading(true);
+      try {
+        // Get firebaseUid from AsyncStorage
+        const storedFirebaseUid = await AsyncStorage.getItem('firebaseUid');
+        
+        if (!storedFirebaseUid) {
+          console.log('No user ID found in storage');
+          Alert.alert(
+            'Login Required',
+            'Please log in to book a coaching session',
+            [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'Go to Login',
+                onPress: () => {
+                  // Navigate to sign-in page
+                  if (typeof router !== 'undefined' && router.replace) {
+                    router.replace('/sign-in');
+                  }
+                },
+              },
+            ]
+          );
+          return;
+        }
+        
+        // Fetch user data using the Firebase UID
+        const response = await axios.get(`${API_BASE_URL}/user/${storedFirebaseUid}`);
+        if (response.data && response.data._id) {
+          setUserId(response.data._id);
+        }
+        
+        // Fetch availability data
+        await fetchAvailability();
+      } catch (err) {
+        console.error('Error during initialization:', err);
+        setError('Failed to initialize. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initialize();
+  }, [coach._id]);
+
+  // Process availability data from backend and organize it by date
+  const processAvailabilityData = (availabilityData) => {
+    const processedAvailability = {};
+
+    // For each of the next 7 days
+    weekDates.forEach(dayInfo => {
+      // Find slots for this day of week
+      const daySlots = availabilityData.filter(
+        slot => slot.dayOfWeek === dayInfo.dayNum && slot.isRecurring
+      );
+      
+      // Check for existing bookings on this date
+      const existingBookings = coach.bookings ? coach.bookings.filter(booking => {
+        const bookingDate = new Date(booking.date);
+        const bookingDateStr = formatDate(bookingDate);
+        return bookingDateStr === dayInfo.date && booking.status !== 'cancelled';
+      }) : [];
+      
+      // Convert to time slots format
+      processedAvailability[dayInfo.date] = daySlots.map((slot, idx) => {
+        // Check if this slot is booked
+        const isBooked = existingBookings.some(booking => 
+          booking.startTime <= slot.startTime && booking.endTime >= slot.endTime
+        );
+        
+        return {
+          id: `${dayInfo.date}-${idx}`,
+          start: slot.startTime,
+          end: slot.endTime,
+          available: !isBooked,
+        };
+      });
     });
-  });
+
+    setAvailability(processedAvailability);
+  };
 
   // Get available time slots for the selected date
   const getAvailableTimeSlots = () => {
-    return mockAvailability[selectedDate] || [];
+    return availability[selectedDate] || [];
   };
 
   // Handle booking request
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedTimeSlot) {
       Alert.alert('Error', 'Please select a time slot');
       return;
     }
 
-    // Call the onBooking callback with booking details
-    onBooking({
-      coachId: coach._id,
-      coachName: coach.CoachName,
-      date: selectedDate,
-      timeSlot: selectedTimeSlot,
-    });
+    // Check if we have user ID
+    if (!userId) {
+      Alert.alert('Error', 'Unable to identify user. Please log in again.');
+      return;
+    }
 
-    // Reset selection after booking
-    setSelectedTimeSlot(null);
+    try {
+      setBookingInProgress(true);
+      
+      // Get the selected date
+      const bookingDate = selectedDate;
+      
+      const courtId = null; 
+      const notes = ""; 
+      
+      // Create booking payload
+      const bookingData = {
+        date: bookingDate,
+        startTime: selectedTimeSlot.start,
+        endTime: selectedTimeSlot.end,
+        userId: userId, // Use the userId from state instead of hardcoded value
+        courtId,
+        notes,
+      };
+      
+      // Send booking request to the server
+      const response = await axios.post(
+        `${API_BASE_URL}/Coachers/${coach._id}/bookings`,
+        bookingData
+      );
+      
+      if (response.data.success) {
+        // Success! Refresh availability data
+        await fetchAvailability();
+        
+        // Reset selection after booking
+        setSelectedTimeSlot(null);
+        
+        // Notify parent component
+        onBooking({
+          coachId: coach._id,
+          coachName: coach.CoachName,
+          date: bookingDate,
+          timeSlot: selectedTimeSlot,
+          bookingId: response.data.data._id,
+        });
+        
+        // Show success message
+        Alert.alert(
+          'Booking Successful',
+          'Your session has been successfully booked. Please wait until the coach accepts your request.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // Show error message
+        Alert.alert(
+          'Booking Failed',
+          response.data.message || 'Failed to book session',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (err) {
+      console.error('Error booking session:', err);
+      
+      // Show error message
+      Alert.alert(
+        'Booking Error',
+        err.response?.data?.message || 'An error occurred while booking your session',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setBookingInProgress(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#4A80F0" />
+        <Text style={styles.loadingText}>Loading availability...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => {
+            setError(null);
+            setLoading(true);
+            // Re-fetch availability
+            fetchAvailability();
+          }}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Coach Availability</Text>
-      
+
       {/* Day selector */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
         {weekDates.map((day) => (
@@ -151,12 +393,19 @@ const CoachAvailability = ({ coach, onBooking }) => {
       <TouchableOpacity 
         style={[
           styles.bookButton,
-          !selectedTimeSlot && styles.disabledButton,
+          (!selectedTimeSlot || bookingInProgress) && styles.disabledButton,
         ]}
         onPress={handleBooking}
-        disabled={!selectedTimeSlot}
+        disabled={!selectedTimeSlot || bookingInProgress}
       >
-        <Text style={styles.bookButtonText}>Book Session</Text>
+        {bookingInProgress ? (
+          <View style={styles.bookingProgress}>
+            <ActivityIndicator size="small" color="white" />
+            <Text style={[styles.bookButtonText, styles.bookingProgressText]}>Booking...</Text>
+          </View>
+        ) : (
+          <Text style={styles.bookButtonText}>Book Session</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -168,6 +417,32 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
+  },
+  centerContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 300,
+  },
+  loadingText: {
+    marginTop: 16,
+    color: '#666',
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#e53935',
+    fontSize: 16,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#4A80F0',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 18,
@@ -271,6 +546,14 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  bookingProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookingProgressText: {
+    marginLeft: 8,
   },
 });
 

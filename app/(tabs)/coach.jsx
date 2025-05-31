@@ -131,7 +131,7 @@ const Coaches = () => {
           <Searchcoach />
         </View>
         <TouchableOpacity style={styles.filterButton} onPress={toggleDropdown}>
-          <Feather name="filter" size={22} color="#fff" />
+          <Feather name="filter" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -254,9 +254,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 21,
     fontWeight: 'bold',
-    marginTop:20,
+    marginTop:15,
     padding: 5,
-    marginBottom:10,
+    marginBottom:5,
     textAlign:'center'
   },
   dropdownContainer: {
