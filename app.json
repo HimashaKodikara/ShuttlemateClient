@@ -12,13 +12,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "icon": "../assets/logo.png",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-      
+      "foregroundImage": "../assets/logo.png", 
         "backgroundColor": "#ffffff"
+        
       },
       "permissions": ["INTERNET"],
       "package": "com.anonymous.shuttlemate"

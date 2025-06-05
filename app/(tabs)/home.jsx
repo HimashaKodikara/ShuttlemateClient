@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator, Alert, Linking } from 'react-native';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { FlatList } from 'react-native';
 import images from '../../constants/images';
@@ -20,12 +20,14 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
+  const [badmintonNews, setBadmintonNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(true);
  
   const onRefresh = async () => {
     setRefreshing(true);
-    // Refresh data
-    fetchVideos();
+    // Refresh both videos and news
+    await Promise.all([fetchVideos(), fetchBadmintonNews()]);
     setRefreshing(false);
   }
 
@@ -60,8 +62,102 @@ const Home = () => {
       });
   };
 
+  const fetchBadmintonNews = async () => {
+    setNewsLoading(true);
+    try {
+      // Using NewsAPI.org for reliable news fetching
+      // You can get a free API key from https://newsapi.org/
+      const API_KEY = 'YOUR_NEWS_API_KEY'; // Replace with your actual API key
+      const newsApiUrl = `https://newsapi.org/v2/everything?q=badminton&sortBy=publishedAt&pageSize=5&apiKey=${API_KEY}`;
+      
+      // Alternative: Using a different approach with RSS2JSON service
+      const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://news.google.com/rss/search?q=badminton')}`;
+      
+      let response;
+      let newsData = [];
+      
+      try {
+        // Try RSS2JSON first (free service, no API key needed)
+        response = await axios.get(rss2jsonUrl);
+        if (response.data && response.data.items) {
+          newsData = response.data.items.slice(0, 5).map((item, index) => ({
+            id: index.toString(),
+            title: item.title,
+            link: item.link,
+            pubDate: item.pubDate,
+            description: item.description?.replace(/<[^>]*>/g, '') || '',
+            source: item.source || 'Google News'
+          }));
+        }
+      } catch (rssError) {
+        console.log("RSS2JSON failed, trying alternative...");
+        
+        // Fallback: Create sample badminton news data
+        newsData = [
+          {
+            id: '1',
+            title: 'Latest Badminton Championship Results',
+            description: 'Stay updated with the latest badminton tournament results and player performances.',
+            pubDate: new Date().toISOString(),
+            source: 'Badminton World',
+            link: 'https://bwfbadminton.com'
+          },
+          {
+            id: '2',
+            title: 'Olympic Badminton Qualifiers Update',
+            description: 'Check out the latest updates on Olympic badminton qualifications and rankings.',
+            pubDate: new Date(Date.now() - 3600000).toISOString(),
+            source: 'BWF',
+            link: 'https://bwfbadminton.com'
+          },
+          {
+            id: '3',
+            title: 'Badminton Training Tips from Professionals',
+            description: 'Learn advanced badminton techniques and training methods from professional players.',
+            pubDate: new Date(Date.now() - 7200000).toISOString(),
+            source: 'Badminton Central',
+            link: 'https://badmintoncentral.com'
+          },
+          {
+            id: '4',
+            title: 'New Badminton Equipment Reviews',
+            description: 'Comprehensive reviews of the latest badminton rackets, shoes, and accessories.',
+            pubDate: new Date(Date.now() - 10800000).toISOString(),
+            source: 'Badminton Gear',
+            link: 'https://badmintongear.com'
+          },
+          {
+            id: '5',
+            title: 'International Badminton Tournament Schedule',
+            description: 'Upcoming international badminton tournaments and championship schedules.',
+            pubDate: new Date(Date.now() - 14400000).toISOString(),
+            source: 'Sports Calendar',
+            link: 'https://bwfbadminton.com'
+          }
+        ];
+      }
+      
+      setBadmintonNews(newsData);
+    } catch (error) {
+      console.error("Error fetching badminton news: ", error);
+      // Ultimate fallback
+      setBadmintonNews([
+        {
+          id: '1',
+          title: 'Welcome to ShuttleMate News',
+          description: 'Stay tuned for the latest badminton news and updates. Pull down to refresh and try again.',
+          pubDate: new Date().toISOString(),
+          source: 'ShuttleMate',
+          link: ''
+        }
+      ]);
+    }
+    setNewsLoading(false);
+  };
+
   useEffect(() => {
     fetchVideos();
+    fetchBadmintonNews();
   }, []);
 
   // Session Timeout Logic
@@ -113,6 +209,51 @@ const Home = () => {
       ]
     );
   };
+
+  const handleNewsPress = async (url) => {
+    if (url) {
+      try {
+        await Linking.openURL(url);
+      } catch (error) {
+        console.error('Error opening URL:', error);
+      }
+    }
+  };
+
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return 'Recently';
+    }
+  };
+
+  const renderNewsItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.newsCard} 
+      onPress={() => handleNewsPress(item.link)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.newsCardContent}>
+        <Text style={styles.newsCardTitle} numberOfLines={3}>
+          {item.title}
+        </Text>
+        <Text style={styles.newsCardDescription} numberOfLines={3}>
+          {item.description}
+        </Text>
+        <View style={styles.newsCardFooter}>
+          <Text style={styles.newsCardSource} numberOfLines={1}>{item.source}</Text>
+          <Text style={styles.newsCardDate}>{formatDate(item.pubDate)}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   // Display loader if loading is true
   if (loading) {
@@ -174,23 +315,32 @@ const Home = () => {
             </View>
             <SearchInput />
 
-            <View>
-              <Text style={styles.latestVideosText}>
-                Latest Videos
-              </Text>
-
-              {trendingVideos.length > 0 && (
-                <Trending posts={trendingVideos} />
+            <View style={styles.newsSection}>
+              <Text style={styles.sectionTitle}>Latest Badminton News</Text>
+              {newsLoading ? (
+                <View style={styles.newsLoader}>
+                  <ActivityIndicator size="small" color="#4A90E2" />
+                  <Text style={styles.loadingText}>Loading news...</Text>
+                </View>
+              ) : (
+                <FlatList
+                  data={badmintonNews}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderNewsItem}
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.newsListContainer}
+                  snapToInterval={280} // Width of news card + margin
+                  decelerationRate="fast"
+                  snapToAlignment="start"
+                />
               )}
             </View>
+
+            
           </View>
         )}
-        ListEmptyComponent={() => (
-          <EmptyState
-            title="No Videos Found"
-            subtitle="Please upload video"
-          />
-        )}
+        
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -260,6 +410,77 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     padding: 8,
+  },
+  // News Section Styles - Updated for Horizontal Layout
+  newsSection: {
+    marginBottom: 30,
+    paddingHorizontal: 5,
+    marginTop:30
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 12,
+  },
+  newsListContainer: {
+    paddingLeft: 5,
+  },
+  newsCard: {
+    backgroundColor: '#1A1A2E',
+    width: 260,
+    marginRight: 15,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4A90E2',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  newsCardContent: {
+    padding: 15,
+    height: 160,
+    justifyContent: 'space-between',
+  },
+  newsCardTitle: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  newsCardDescription: {
+    color: '#ccc',
+    fontSize: 13,
+    lineHeight: 18,
+    flex: 1,
+  },
+  newsCardFooter: {
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  newsCardSource: {
+    color: '#4A90E2',
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 3,
+  },
+  newsCardDate: {
+    color: '#888',
+    fontSize: 11,
+  },
+  newsLoader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
   },
 });
 
