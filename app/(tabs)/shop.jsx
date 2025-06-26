@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, RefreshControl } from 'react-native'
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, RefreshControl, ImageBackground } from 'react-native'
 import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import ItemCard from '../components/ItemCard'
@@ -6,6 +6,8 @@ import ShopCard from '../components/ShopCard'
 import { useFocusEffect } from '@react-navigation/native'
 import Icon from 'react-native-vector-icons/Feather'
 import API_BASE_URL from '../../server/api.config'
+import bg from '../../assets/backgorundimg.jpg'
+
 
 const Shop = () => {
   const [items, setItems] = useState([])
@@ -14,7 +16,7 @@ const Shop = () => {
   const [selectedItem, setSelectedItem] = useState(null)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  
+
   // New states for shop selection
   const [shops, setShops] = useState([])
   const [selectedShopId, setSelectedShopId] = useState('')
@@ -43,7 +45,7 @@ const Shop = () => {
   const fetchShops = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/shops/`)
-      
+
       if (response.data && response.data.shops && Array.isArray(response.data.shops)) {
         setShops(response.data.shops)
       } else if (Array.isArray(response.data)) {
@@ -62,7 +64,7 @@ const Shop = () => {
     try {
       setLoading(true)
       const response = await axios.get(`${API_BASE_URL}/items/`)
-      
+
       if (response.data && Array.isArray(response.data)) {
         const allItems = response.data.reduce((acc, category) => {
           if (category.items && Array.isArray(category.items)) {
@@ -70,12 +72,12 @@ const Shop = () => {
           }
           return acc
         }, [])
-        
+
         setItems(allItems)
       } else {
         setItems(response.data)
       }
-      
+
       setLoading(false)
     } catch (err) {
       console.error('Error fetching items:', err)
@@ -90,7 +92,7 @@ const Shop = () => {
       setSelectedItem(null)
       setIsShopModalVisible(false)
       setIsDropdownOpen(false)
-      
+
       return () => {
         // Cleanup if needed
       }
@@ -105,16 +107,16 @@ const Shop = () => {
     setSelectedShopId(shop._id)
     setSelectedShopName(shop.ShopName)
     setIsDropdownOpen(false)
-    
+
     try {
       // Check if shop already has all the needed details to avoid extra API call
       if (shop.brands && shop.categories && shop.items) {
         setSelectedShop(shop)
         setIsShopModalVisible(true)
       } else {
-  
+
         const response = await axios.get(`${API_BASE_URL}/shops/shop/${shop._id}`)
-        
+
         const shopData = response.data && response.data.shop ? response.data.shop : response.data
         setSelectedShop(shopData)
         setIsShopModalVisible(true)
@@ -124,10 +126,10 @@ const Shop = () => {
     }
   }
 
-  
+
   const getColorCode = (colorName) => {
     const colorMap = {
-      
+
       'red': '#FF0000',
       'blue': '#0000FF',
       'green': '#008000',
@@ -142,7 +144,7 @@ const Shop = () => {
       'grey': '#808080',
       'silver': '#C0C0C0',
       'gold': '#FFD700',
-      
+
       // Additional colors
       'beige': '#F5F5DC',
       'navy': '#000080',
@@ -163,32 +165,32 @@ const Shop = () => {
       'salmon': '#FA8072',
       'khaki': '#F0E68C',
     }
-    
+
     // Check if color name exists in our map (case insensitive)
     const lowerCaseColorName = colorName ? colorName.toLowerCase() : '';
-    
+
     // Try exact match first
     if (colorMap[lowerCaseColorName]) {
       return colorMap[lowerCaseColorName];
     }
-    
+
     // Try partial match
     for (const [key, value] of Object.entries(colorMap)) {
       if (lowerCaseColorName.includes(key)) {
         return value;
       }
     }
-    
-  
+
+
     return '#CCCCCC';
   }
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.itemCard} 
+    <TouchableOpacity
+      style={styles.itemCard}
       onPress={() => handleItemPress(item)}
     >
-      <Image 
+      <Image
         source={{ uri: item.itemphoto }}
         style={styles.itemImage}
         resizeMode="cover"
@@ -197,11 +199,11 @@ const Shop = () => {
         <Text style={styles.itemName}>{item.name}</Text>
         {item.color && (
           <View style={styles.colorContainer}>
-            <View 
+            <View
               style={[
-                styles.colorDot, 
+                styles.colorDot,
                 { backgroundColor: getColorCode(item.color) }
-              ]} 
+              ]}
             />
           </View>
         )}
@@ -212,7 +214,7 @@ const Shop = () => {
 
   const handleItemPress = (item) => {
     setSelectedItem({
-      _id:item._id,
+      _id: item._id,
       name: item.name,
       price: item.price,
       color: item.color,
@@ -237,9 +239,16 @@ const Shop = () => {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#4A90E2" />
-      </View>
+      <ImageBackground
+        source={bg}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#4A90E2" />
+          
+        </View>
+      </ImageBackground>
     )
   }
 
@@ -255,104 +264,114 @@ const Shop = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Shop Now</Text>
-      
-      {/* Custom Dropdown for Shop Selection */}
-      <View style={styles.dropdownContainer}>
-       
-        <TouchableOpacity 
-          style={styles.dropdownSelector} 
-          onPress={toggleDropdown}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.dropdownText}>{selectedShopName}</Text>
-          <Icon name={isDropdownOpen ? "chevron-up" : "chevron-down"} size={20} color="#fff" />
-        </TouchableOpacity>
-        
-        {isDropdownOpen && (
-          <View style={styles.dropdownList}>
-            <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
-              {Array.isArray(shops) && shops.length > 0 ? (
-                shops.map((shop) => {
-                  // Check if shop data is valid
-                  if (!shop || !shop._id || !shop.ShopName) {
-                    return null
-                  }
-                  
-                  return (
-                    <TouchableOpacity
-                      key={shop._id}
-                      style={styles.dropdownItem}
-                      onPress={() => handleShopSelection(shop)}
-                    >
-                      <Image 
-                        source={{ uri: shop.ShopPhoto || 'https://via.placeholder.com/30' }} 
-                        style={styles.shopIcon} 
-                        resizeMode="cover"
-                      />
-                      <Text style={styles.dropdownItemText}>{shop.ShopName}</Text>
-                    </TouchableOpacity>
-                  )
-                })
-              ) : (
-                <View style={styles.emptyShopsList}>
-                  <Text style={styles.emptyShopsText}>No shops available</Text>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        )}
-      </View>
-      
-      <FlatList
-        data={items}
-        renderItem={renderItem}
-        keyExtractor={item => item._id}
-        numColumns={2}
-        contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#4A90E2']}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text style={{color: '#fff'}}>No items found</Text>
-          </View>
-        }
-      />
-      
-    
-      <Modal
-        visible={isModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={closeModal}
-      >
-        <ItemCard item={selectedItem} onClose={closeModal} />
-      </Modal>
+    <ImageBackground
+      source={bg}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <Text style={styles.header}>Shop Now</Text>
 
-      {/* Shop Detail Modal */}
-      {selectedShop && (
-        <ShopCard 
-          visible={isShopModalVisible}
-          onRequestClose={closeShopModal}
-          shop={selectedShop}
-        />
-      )}
-    </View>
+          {/* Custom Dropdown for Shop Selection */}
+          <View style={styles.dropdownContainer}>
+
+            <TouchableOpacity
+              style={styles.dropdownSelector}
+              onPress={toggleDropdown}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.dropdownText}>{selectedShopName}</Text>
+              <Icon name={isDropdownOpen ? "chevron-up" : "chevron-down"} size={20} color="#fff" />
+            </TouchableOpacity>
+
+            {isDropdownOpen && (
+              <View style={styles.dropdownList}>
+                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled={true}>
+                  {Array.isArray(shops) && shops.length > 0 ? (
+                    shops.map((shop) => {
+                      // Check if shop data is valid
+                      if (!shop || !shop._id || !shop.ShopName) {
+                        return null
+                      }
+
+                      return (
+                        <TouchableOpacity
+                          key={shop._id}
+                          style={styles.dropdownItem}
+                          onPress={() => handleShopSelection(shop)}
+                        >
+                          <Image
+                            source={{ uri: shop.ShopPhoto || 'https://via.placeholder.com/30' }}
+                            style={styles.shopIcon}
+                            resizeMode="cover"
+                          />
+                          <Text style={styles.dropdownItemText}>{shop.ShopName}</Text>
+                        </TouchableOpacity>
+                      )
+                    })
+                  ) : (
+                    <View style={styles.emptyShopsList}>
+                      <Text style={styles.emptyShopsText}>No shops available</Text>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={item => item._id}
+            numColumns={2}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#4A90E2']}
+              />
+            }
+            ListEmptyComponent={
+              <View style={styles.centered}>
+                <Text style={{ color: '#fff' }}>No items found</Text>
+              </View>
+            }
+          />
+
+
+          <Modal
+            visible={isModalVisible}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={closeModal}
+          >
+            <ItemCard item={selectedItem} onClose={closeModal} />
+          </Modal>
+
+          {/* Shop Detail Modal */}
+          {selectedShop && (
+            <ShopCard
+              visible={isShopModalVisible}
+              onRequestClose={closeShopModal}
+              shop={selectedShop}
+            />
+          )}
+        </View>
+      </View>
+    </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+
+  backgroundImage: {
     flex: 1,
-    padding: 5,
-    backgroundColor: '#0A0A1A',
-    paddingBottom: 0
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 10, 26, 0.98)',
   },
   header: {
     color: 'white',
@@ -446,7 +465,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     opacity: 0.9
-    
+
   },
   itemDetails: {
     padding: 12,

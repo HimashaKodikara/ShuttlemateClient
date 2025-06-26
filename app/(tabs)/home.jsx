@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator, Alert, Linking } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, SafeAreaView, RefreshControl, ActivityIndicator, Alert, Linking, ImageBackground } from 'react-native';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { FlatList } from 'react-native';
 import images from '../../constants/images';
@@ -14,21 +14,69 @@ import { router } from 'expo-router';
 import VideoCard from '../components/VideoCard';
 import API_BASE_URL from '../../server/api.config';
 
+import bg from '../../assets/backgorundimg.jpg'
+
 const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
+
+// Sample news data
+const SAMPLE_NEWS = [
+  {
+    id: '1',
+    title: 'World Championships 2024 Results',
+    description: 'Viktor Axelsen claims his second consecutive world title in a thrilling final match.',
+    source: 'BWF Official',
+    time: '2 hours ago',
+    category: 'Tournament'
+  },
+  {
+    id: '2',
+    title: 'Olympic Qualification Updates',
+    description: 'Latest rankings and qualification standings for Paris 2024 Olympics.',
+    source: 'Olympic News',
+    time: '5 hours ago',
+    category: 'Olympics'
+  },
+  {
+    id: '3',
+    title: 'New Training Techniques',
+    description: 'Professional coaches share innovative training methods for improved performance.',
+    source: 'Badminton Academy',
+    time: '1 day ago',
+    category: 'Training'
+  },
+  {
+    id: '4',
+    title: 'Equipment Review: Latest Rackets',
+    description: 'In-depth analysis of the newest badminton rackets hitting the market this season.',
+    source: 'Gear Guide',
+    time: '2 days ago',
+    category: 'Equipment'
+  },
+  {
+    id: '5',
+    title: 'Junior Championship Highlights',
+    description: 'Rising stars showcase exceptional talent in the youth badminton championships.',
+    source: 'Youth Sports',
+    time: '3 days ago',
+    category: 'Youth'
+  }
+];
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
-  const [badmintonNews, setBadmintonNews] = useState([]);
+  const [badmintonNews, setBadmintonNews] = useState(SAMPLE_NEWS);
   const [loading, setLoading] = useState(true);
-  const [newsLoading, setNewsLoading] = useState(true);
- 
+
   const onRefresh = async () => {
     setRefreshing(true);
-    // Refresh both videos and news
-    await Promise.all([fetchVideos(), fetchBadmintonNews()]);
-    setRefreshing(false);
+    await fetchVideos();
+    // Simulate news refresh with a small delay
+    setTimeout(() => {
+      setBadmintonNews([...SAMPLE_NEWS]);
+      setRefreshing(false);
+    }, 1000);
   }
 
   const fetchVideos = () => {
@@ -36,22 +84,22 @@ const Home = () => {
     axios.get(`${API_BASE_URL}/videos/`)
       .then(response => {
         setItems(response.data.videos);
-        
+
         if (response.data.videos && response.data.videos.length > 0) {
           // Sort by most recent (assuming there's a timestamp or id that indicates recency)
           const sortedVideos = [...response.data.videos].sort((a, b) => {
             // If you have a timestamp field, use that for sorting
-             return new Date(b.createdAt) - new Date(a.createdAt);
+            return new Date(b.createdAt) - new Date(a.createdAt);
           });
-          
+
           const recentVideos = sortedVideos.slice(0, 3);
-          
+
           const formattedTrending = recentVideos.map((video, index) => ({
             $id: video.id ? video.id.toString() : index.toString(),
             imgUrl: video.imgUrl,
             videoUrl: video.videoUrl
           }));
-          
+
           setTrendingVideos(formattedTrending);
         }
         setLoading(false);
@@ -62,102 +110,8 @@ const Home = () => {
       });
   };
 
-  const fetchBadmintonNews = async () => {
-    setNewsLoading(true);
-    try {
-      // Using NewsAPI.org for reliable news fetching
-      // You can get a free API key from https://newsapi.org/
-      const API_KEY = 'YOUR_NEWS_API_KEY'; // Replace with your actual API key
-      const newsApiUrl = `https://newsapi.org/v2/everything?q=badminton&sortBy=publishedAt&pageSize=5&apiKey=${API_KEY}`;
-      
-      // Alternative: Using a different approach with RSS2JSON service
-      const rss2jsonUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://news.google.com/rss/search?q=badminton')}`;
-      
-      let response;
-      let newsData = [];
-      
-      try {
-        // Try RSS2JSON first (free service, no API key needed)
-        response = await axios.get(rss2jsonUrl);
-        if (response.data && response.data.items) {
-          newsData = response.data.items.slice(0, 5).map((item, index) => ({
-            id: index.toString(),
-            title: item.title,
-            link: item.link,
-            pubDate: item.pubDate,
-            description: item.description?.replace(/<[^>]*>/g, '') || '',
-            source: item.source || 'Google News'
-          }));
-        }
-      } catch (rssError) {
-        console.log("RSS2JSON failed, trying alternative...");
-        
-        // Fallback: Create sample badminton news data
-        newsData = [
-          {
-            id: '1',
-            title: 'Latest Badminton Championship Results',
-            description: 'Stay updated with the latest badminton tournament results and player performances.',
-            pubDate: new Date().toISOString(),
-            source: 'Badminton World',
-            link: 'https://bwfbadminton.com'
-          },
-          {
-            id: '2',
-            title: 'Olympic Badminton Qualifiers Update',
-            description: 'Check out the latest updates on Olympic badminton qualifications and rankings.',
-            pubDate: new Date(Date.now() - 3600000).toISOString(),
-            source: 'BWF',
-            link: 'https://bwfbadminton.com'
-          },
-          {
-            id: '3',
-            title: 'Badminton Training Tips from Professionals',
-            description: 'Learn advanced badminton techniques and training methods from professional players.',
-            pubDate: new Date(Date.now() - 7200000).toISOString(),
-            source: 'Badminton Central',
-            link: 'https://badmintoncentral.com'
-          },
-          {
-            id: '4',
-            title: 'New Badminton Equipment Reviews',
-            description: 'Comprehensive reviews of the latest badminton rackets, shoes, and accessories.',
-            pubDate: new Date(Date.now() - 10800000).toISOString(),
-            source: 'Badminton Gear',
-            link: 'https://badmintongear.com'
-          },
-          {
-            id: '5',
-            title: 'International Badminton Tournament Schedule',
-            description: 'Upcoming international badminton tournaments and championship schedules.',
-            pubDate: new Date(Date.now() - 14400000).toISOString(),
-            source: 'Sports Calendar',
-            link: 'https://bwfbadminton.com'
-          }
-        ];
-      }
-      
-      setBadmintonNews(newsData);
-    } catch (error) {
-      console.error("Error fetching badminton news: ", error);
-      // Ultimate fallback
-      setBadmintonNews([
-        {
-          id: '1',
-          title: 'Welcome to ShuttleMate News',
-          description: 'Stay tuned for the latest badminton news and updates. Pull down to refresh and try again.',
-          pubDate: new Date().toISOString(),
-          source: 'ShuttleMate',
-          link: ''
-        }
-      ]);
-    }
-    setNewsLoading(false);
-  };
-
   useEffect(() => {
     fetchVideos();
-    fetchBadmintonNews();
   }, []);
 
   // Session Timeout Logic
@@ -210,46 +164,43 @@ const Home = () => {
     );
   };
 
-  const handleNewsPress = async (url) => {
-    if (url) {
-      try {
-        await Linking.openURL(url);
-      } catch (error) {
-        console.error('Error opening URL:', error);
-      }
-    }
-  };
-
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (error) {
-      return 'Recently';
-    }
+  const getCategoryColor = (category) => {
+    const colors = {
+      'Tournament': '#FF6B6B',
+      'Olympics': '#4ECDC4',
+      'Training': '#45B7D1',
+      'Equipment': '#96CEB4',
+      'Youth': '#FFEAA7'
+    };
+    return colors[category] || '#4A90E2';
   };
 
   const renderNewsItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.newsCard} 
-      onPress={() => handleNewsPress(item.link)}
-      activeOpacity={0.7}
+    <TouchableOpacity
+      style={styles.newsCard}
+      activeOpacity={0.8}
     >
       <View style={styles.newsCardContent}>
-        <Text style={styles.newsCardTitle} numberOfLines={3}>
+        <View style={styles.newsHeader}>
+          <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(item.category) }]}>
+           
+          </View>
+          <Text style={styles.newsTime}>{item.time}</Text>
+        </View>
+        
+        <Text style={styles.newsTitle} numberOfLines={2}>
           {item.title}
         </Text>
-        <Text style={styles.newsCardDescription} numberOfLines={3}>
+        
+        <Text style={styles.newsDescription} numberOfLines={3}>
           {item.description}
         </Text>
-        <View style={styles.newsCardFooter}>
-          <Text style={styles.newsCardSource} numberOfLines={1}>{item.source}</Text>
-          <Text style={styles.newsCardDate}>{formatDate(item.pubDate)}</Text>
+        
+        <View style={styles.newsFooter}>
+          <View style={styles.sourceContainer}>
+            <MaterialIcons name="article" size={14} color="#4A90E2" />
+            <Text style={styles.newsSource}>{item.source}</Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -258,105 +209,121 @@ const Home = () => {
   // Display loader if loading is true
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.logoTitleContainer}>
-            <Image
-              source={images.Logo}
-              resizeMode="contain"
-              style={styles.logo}
-            />
-            <Text style={styles.titleText}>ShuttleMate</Text>
+      <ImageBackground
+        source={bg}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.header}>
+            <View style={styles.logoTitleContainer}>
+              <Image
+                source={images.Logo}
+                resizeMode="contain"
+                style={styles.logo}
+              />
+              <Text style={styles.titleText}>ShuttleMate</Text>
+            </View>
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+              <MaterialIcons name="logout" size={24} color="white" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <MaterialIcons name="logout" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
-        </View>
-      </SafeAreaView>
+          <View style={styles.loaderContainer}>
+            <ActivityIndicator size="large" color="#4A90E2" />
+          </View>
+        </SafeAreaView>
+      </ImageBackground>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={items}
-        keyExtractor={(item, index) =>
-          item.id ? item.id.toString() : index.toString()
-        }
-        renderItem={({ item }) => (
-          <VideoCard
-            videoName={item.videoName}
-            videoCreator={item.videoCreator}
-            imgUrl={item.imgUrl}
-            videoUrl={item.videoUrl}
-            videoCreatorPhoto={item.videoCreatorPhoto}
-          />
-        )}
-        ListHeaderComponent={() => (
-          <View>
-            <View style={styles.header}>
-              <View style={styles.logoTitleContainer}>
-                <Image
-                  source={images.Logo}
-                  resizeMode="contain"
-                  style={styles.logo}
-                />
-                <View style={styles.titleContainer}>
-                  <Text style={styles.welcomeText}>Welcome Back</Text>
-                  <Text style={styles.titleText}>ShuttleMate</Text>
+    <ImageBackground
+      source={bg}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <SafeAreaView style={styles.container}>
+          <FlatList
+            data={items}
+            keyExtractor={(item, index) =>
+              item.id ? item.id.toString() : index.toString()
+            }
+            renderItem={({ item }) => (
+              <VideoCard
+                videoName={item.videoName}
+                videoCreator={item.videoCreator}
+                imgUrl={item.imgUrl}
+                videoUrl={item.videoUrl}
+                videoCreatorPhoto={item.videoCreatorPhoto}
+              />
+            )}
+            ListHeaderComponent={() => (
+              <View>
+                <View style={styles.header}>
+                  <View style={styles.logoTitleContainer}>
+                    <Image
+                      source={images.Logo}
+                      resizeMode="contain"
+                      style={styles.logo}
+                    />
+                    <View style={styles.titleContainer}>
+                      <Text style={styles.welcomeText}>Welcome Back</Text>
+                      <Text style={styles.titleText}>ShuttleMate</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+                    <MaterialIcons name="logout" size={24} color="white" />
+                  </TouchableOpacity>
+                </View>
+                <SearchInput />
+
+                <View style={styles.newsSection}>
+                  <View style={styles.sectionHeader}>
+                    <MaterialIcons name="newspaper" size={20} color="#4A90E2" />
+                    <Text style={styles.sectionTitle}>Latest Badminton News</Text>
+                  </View>
+                  
+                  <FlatList
+                    data={badmintonNews}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderNewsItem}
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.newsListContainer}
+                    snapToInterval={290}
+                    decelerationRate="fast"
+                    snapToAlignment="start"
+                  />
                 </View>
               </View>
-              <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                <MaterialIcons name="logout" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-            <SearchInput />
-
-            <View style={styles.newsSection}>
-              <Text style={styles.sectionTitle}>Latest Badminton News</Text>
-              {newsLoading ? (
-                <View style={styles.newsLoader}>
-                  <ActivityIndicator size="small" color="#4A90E2" />
-                  <Text style={styles.loadingText}>Loading news...</Text>
-                </View>
-              ) : (
-                <FlatList
-                  data={badmintonNews}
-                  keyExtractor={(item) => item.id}
-                  renderItem={renderNewsItem}
-                  horizontal={true}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.newsListContainer}
-                  snapToInterval={280} // Width of news card + margin
-                  decelerationRate="fast"
-                  snapToAlignment="start"
-                />
-              )}
-            </View>
-
-            
-          </View>
-        )}
-        
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
+            )}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#4A90E2']}
+                tintColor="#4A90E2"
+              />
+            }
           />
-        }
-      />
-    </SafeAreaView>
+        </SafeAreaView>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 10, 26, 0.98)',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#0A0A1A',
-    padding: 7,
+    paddingHorizontal: 16,
   },
   welcomeText: {
     color: '#fff',
@@ -366,11 +333,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
-  },
-  list: {
-    color: '#fff',
-    fontSize: 24,
-    marginBottom: 10,
   },
   header: {
     flexDirection: 'row',
@@ -385,102 +347,111 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   titleContainer: {
-    marginLeft: 10,
+    marginLeft: 8,
   },
   logo: {
     width: 40,
     height: 40,
-  },
-  latestVideosText: {
-    fontSize: 15,
-    marginTop: 12,
-    color: 'grey',
-    marginBottom: 12,
-    marginLeft: 5
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    color: '#fff',
-    marginTop: 12,
-    fontSize: 16,
-  },
   logoutButton: {
     padding: 8,
   },
-  // News Section Styles - Updated for Horizontal Layout
+  
+  // Enhanced News Section Styles
   newsSection: {
     marginBottom: 30,
+    marginTop: 30,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
     paddingHorizontal: 5,
-    marginTop:30
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 12,
+    marginLeft: 8,
   },
   newsListContainer: {
     paddingLeft: 5,
+    paddingRight: 10,
   },
   newsCard: {
     backgroundColor: '#1A1A2E',
-    width: 260,
+    width: 280,
     marginRight: 15,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
-    elevation: 3,
+    borderRadius: 16,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    borderWidth: 1,
+    borderColor: '#2A2A3E',
   },
   newsCardContent: {
-    padding: 15,
-    height: 160,
-    justifyContent: 'space-between',
+    padding: 16,
+    height: 180,
   },
-  newsCardTitle: {
-    color: '#fff',
-    fontSize: 15,
+  newsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  categoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  categoryText: {
+    color: '#000',
+    fontSize: 10,
     fontWeight: '600',
-    lineHeight: 20,
+    textTransform: 'uppercase',
+  },
+  newsTime: {
+    color: '#888',
+    fontSize: 11,
+  },
+  newsTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 22,
     marginBottom: 8,
   },
-  newsCardDescription: {
+  newsDescription: {
     color: '#ccc',
     fontSize: 13,
     lineHeight: 18,
     flex: 1,
+    marginBottom: 12,
   },
-  newsCardFooter: {
-    marginTop: 10,
-    paddingTop: 8,
+  newsFooter: {
     borderTopWidth: 1,
     borderTopColor: '#333',
+    paddingTop: 10,
   },
-  newsCardSource: {
+  sourceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  newsSource: {
     color: '#4A90E2',
     fontSize: 12,
     fontWeight: '500',
-    marginBottom: 3,
-  },
-  newsCardDate: {
-    color: '#888',
-    fontSize: 11,
-  },
-  newsLoader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    marginLeft: 6,
   },
 });
 

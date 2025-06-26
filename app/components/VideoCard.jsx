@@ -8,7 +8,6 @@ import {
   StyleSheet,
 } from "react-native";
 import playIc from '../../assets/icons/play.png';
-import Menu from '../../assets/icons/menu.png';
 import LottieView from 'lottie-react-native';
 
 const VideoCard = ({ videoName, videoCreator, videoCreatorPhoto, imgUrl, videoUrl }) => {
@@ -59,9 +58,8 @@ const VideoCard = ({ videoName, videoCreator, videoCreatorPhoto, imgUrl, videoUr
           </View>
         </View>
         <View style={styles.menuIconWrapper}>
-          {/* <Image source={Menu} style={styles.menuIcon} resizeMode="contain" /> */}
            <LottieView
-              source={require('../../assets/lottie/reveal-loading.json')} // Adjust the path to your Lottie file
+              source={require('../../assets/lottie/reveal-loading.json')} 
               autoPlay
               loop
               style={{ width: 50, height: 50 }}

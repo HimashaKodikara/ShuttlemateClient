@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
-  FlatList
+  FlatList,
+  ImageBackground
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -17,6 +18,7 @@ import CoachCard from '../components/CoachCard';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import LottieView from 'lottie-react-native';
 import Searchcoach from '../components/Searchcoach';
+import bg from '../../assets/backgorundimg.jpg'
 
 const Coaches = () => {
   const [coaches, setCoaches] = useState([]);
@@ -32,7 +34,6 @@ const Coaches = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Refresh data
     await fetchCoaches();
     setRefreshing(false);
   };
@@ -40,27 +41,54 @@ const Coaches = () => {
   const fetchCoaches = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
+      
+      
       const response = await axios.get(`${API_BASE_URL}/Coachers/`);
-      if (response.data.success) {
-        setCoaches(response.data.coachers);
-        setFilteredCoaches(response.data.coachers);
+      
+  
+      
+      if (response.data && response.data.success) {
+       
+        
+        setCoaches(response.data.coachers || []);
+        setFilteredCoaches(response.data.coachers || []);
 
         // Extract all unique training types
         const allTrainingTypes = new Set();
-        response.data.coachers.forEach(coach => {
-          if (coach.TrainingType && Array.isArray(coach.TrainingType)) {
-            coach.TrainingType.forEach(type => {
-              allTrainingTypes.add(type);
-            });
-          }
-        });
+        if (response.data.coachers && Array.isArray(response.data.coachers)) {
+          response.data.coachers.forEach(coach => {
+            if (coach.TrainingType && Array.isArray(coach.TrainingType)) {
+              coach.TrainingType.forEach(type => {
+                allTrainingTypes.add(type);
+              });
+            }
+          });
+        }
         setTrainingTypes(Array.from(allTrainingTypes));
       } else {
-        setError('Failed to fetch coaches');
+        console.error('API response indicates failure:', response.data);
+        setError('Failed to fetch coaches - API returned unsuccessful response');
       }
     } catch (error) {
       console.error("Error fetching coaches:", error);
-      setError('An error occurred while fetching coaches');
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText
+      });
+      
+      if (error.response) {
+        // Server responded with error status
+        setError(`Server error: ${error.response.status} - ${error.response.statusText}`);
+      } else if (error.request) {
+        // Network error
+        setError('Network error - please check your connection');
+      } else {
+        // Other error
+        setError(`Error: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -80,8 +108,6 @@ const Coaches = () => {
     setSelectedCoach(null);
   };
 
- 
-
   const toggleDropdown = () => {
     setDropdownVisible(!dropdownVisible);
   };
@@ -91,10 +117,8 @@ const Coaches = () => {
     setDropdownVisible(false);
 
     if (type === null) {
-      // Reset filter
       setFilteredCoaches(coaches);
     } else {
-      // Filter coaches by selected training type
       const filtered = coaches.filter(coach =>
         coach.TrainingType && coach.TrainingType.includes(type)
       );
@@ -102,16 +126,31 @@ const Coaches = () => {
     }
   };
 
+  // Debug: Add console logs to track state changes
+  useEffect(() => {
+  }, [coaches]);
+
+  useEffect(() => {
+  }, [filteredCoaches]);
+
   if (loading) {
     return (
+        <ImageBackground
+      source={bg}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color="#fff" />
+        <Text style={styles.loadingText}>Loading coaches...</Text>
       </View>
+      </ImageBackground>
     );
   }
 
   if (error) {
     return (
+
       <View style={[styles.container, styles.centered]}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={fetchCoaches}>
@@ -122,129 +161,146 @@ const Coaches = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Coaches</Text>
+    <ImageBackground
+      source={bg}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <View style={styles.container}>
+          <Text style={styles.heading}>Coaches</Text>
+          
+        
 
-      <View style={styles.dropdownContainer}>
-      <View style={styles.searchFilterRow}>
-        <View style={styles.searchContainer}>
-          <Searchcoach />
-        </View>
-        <TouchableOpacity style={styles.filterButton} onPress={toggleDropdown}>
-          <Feather name="filter" size={18} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-        {/* Training Type Dropdown Modal */}
-        <Modal
-          visible={dropdownVisible}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setDropdownVisible(false)}
-        >
-          <TouchableOpacity
-            style={styles.dropdownOverlay}
-            activeOpacity={1}
-            onPress={() => setDropdownVisible(false)}
-          >
-            <View style={styles.dropdownMenu}>
-              <Text style={styles.modalTitle}>Select Your Requirment</Text>
-              <TouchableOpacity
-                style={styles.dropdownItem}
-                onPress={() => selectTrainingType(null)}
-              >
-                <Text style={styles.dropdownItemText}>All</Text>
-              </TouchableOpacity>
-
-              {trainingTypes.map((type, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.dropdownItem}
-                  onPress={() => selectTrainingType(type)}
-                >
-                  <Text style={styles.dropdownItemText}>{type}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </TouchableOpacity>
-        </Modal>
-      </View>
-
-      <ScrollView
-        style={styles.coachList}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-          />
-        }
-      >
-        {filteredCoaches && filteredCoaches.length > 0 ? filteredCoaches.map((coach) => (
-          <TouchableOpacity key={coach._id} onPress={() => openModal(coach)}>
-            <View style={styles.coachCard}>
-              <Image
-                source={{ uri: coach.CoachPhoto }}
-                style={styles.coachImage}
-              />
-              <View style={styles.coachInfo}>
-                <Text style={styles.coachName}>{coach.CoachName}</Text>
-                <View style={styles.specialtiesContainer}>
-                  {coach.TrainingType && coach.TrainingType.map((specialty, index) => (
-                    <Text key={index} style={styles.specialty}>
-                      {specialty}{index < coach.TrainingType.length - 1 ? ' | ' : ''}
-                    </Text>
-                  ))}
-                </View>
-                <Text style={styles.contactNumber}>{coach.Tel}</Text>
-                <View style={styles.levelsContainer}>
-                  {coach.Courts && coach.Courts.map((court, index) => (
-                    <Text key={index} style={styles.level}>
-                      {court.CourtName}{index < coach.Courts.length - 1 ? ' | ' : ''}
-                    </Text>
-                  ))}
-                </View>
+          <View style={styles.dropdownContainer}>
+            <View style={styles.searchFilterRow}>
+              <View style={styles.searchContainer}>
+                <Searchcoach />
               </View>
-            </View>
-          </TouchableOpacity>
-        )) : (
-          <View style={styles.noCoachesContainer}>
-            <Text style={styles.noCoaches}>
-              {selectedTrainingType
-                ? `No coaches found for ${selectedTrainingType}`
-                : 'No coaches available'}
-            </Text>
-            {selectedTrainingType && (
-              <TouchableOpacity
-                style={styles.resetFilterButton}
-                onPress={() => selectTrainingType(null)}
-              >
-                <Text style={styles.resetFilterText}>Show all coaches</Text>
+              <TouchableOpacity style={styles.filterButton} onPress={toggleDropdown}>
+                <Feather name="filter" size={18} color="#fff" />
               </TouchableOpacity>
-            )}
+            </View>
+
+            {/* Training Type Dropdown Modal */}
+            <Modal
+              visible={dropdownVisible}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={() => setDropdownVisible(false)}
+            >
+              <TouchableOpacity
+                style={styles.dropdownOverlay}
+                activeOpacity={1}
+                onPress={() => setDropdownVisible(false)}
+              >
+                <View style={styles.dropdownMenu}>
+                  <Text style={styles.modalTitle}>Select Your Requirement</Text>
+                  <TouchableOpacity
+                    style={styles.dropdownItem}
+                    onPress={() => selectTrainingType(null)}
+                  >
+                    <Text style={styles.dropdownItemText}>All</Text>
+                  </TouchableOpacity>
+
+                  {trainingTypes.map((type, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.dropdownItem}
+                      onPress={() => selectTrainingType(type)}
+                    >
+                      <Text style={styles.dropdownItemText}>{type}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </TouchableOpacity>
+            </Modal>
           </View>
-        )}
-      </ScrollView>
 
-      {selectedCoach && (
-        <CoachCard
-          visible={modalVisible}
-          coach={selectedCoach}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={closeModal}
-        />
-      )}
+          <ScrollView
+            style={styles.coachList}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+              />
+            }
+          >
+            {filteredCoaches && filteredCoaches.length > 0 ? (
+              filteredCoaches.map((coach) => (
+                <TouchableOpacity key={coach._id} onPress={() => openModal(coach)}>
+                  <View style={styles.coachCard}>
+                    <Image
+                      source={{ uri: coach.CoachPhoto }}
+                      style={styles.coachImage}
+                      onError={(error) => console.log('Image load error:', error)}
+                    />
+                    <View style={styles.coachInfo}>
+                      <Text style={styles.coachName}>{coach.CoachName}</Text>
+                      <View style={styles.specialtiesContainer}>
+                        {coach.TrainingType && coach.TrainingType.map((specialty, index) => (
+                          <Text key={index} style={styles.specialty}>
+                            {specialty}{index < coach.TrainingType.length - 1 ? ' | ' : ''}
+                          </Text>
+                        ))}
+                      </View>
+                      <Text style={styles.contactNumber}>{coach.Tel}</Text>
+                      <View style={styles.levelsContainer}>
+                        {coach.Courts && coach.Courts.map((court, index) => (
+                          <Text key={index} style={styles.level}>
+                            {court.CourtName}{index < coach.Courts.length - 1 ? ' | ' : ''}
+                          </Text>
+                        ))}
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={styles.noCoachesContainer}>
+                <Text style={styles.noCoaches}>
+                  {selectedTrainingType
+                    ? `No coaches found for ${selectedTrainingType}`
+                    : 'No coaches available'}
+                </Text>
+                {selectedTrainingType && (
+                  <TouchableOpacity
+                    style={styles.resetFilterButton}
+                    onPress={() => selectTrainingType(null)}
+                  >
+                    <Text style={styles.resetFilterText}>Show all coaches</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </ScrollView>
 
-    
-    </View>
+          {selectedCoach && (
+            <CoachCard
+              visible={modalVisible}
+              coach={selectedCoach}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={closeModal}
+            />
+          )}
+        </View>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#141424',
     padding: 16,
+  },
+  backgroundImage: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 10, 26, 0.98)',
   },
   centered: {
     justifyContent: 'center',
@@ -254,14 +310,24 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 21,
     fontWeight: 'bold',
-    marginTop:15,
+    marginTop: 15,
     padding: 5,
-    marginBottom:5,
-    textAlign:'center'
+    marginBottom: 5,
+    textAlign: 'center'
+  },
+  debugText: {
+    color: '#ffeb3b',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
   dropdownContainer: {
     marginBottom: 16,
-    flex: 'row'
   },
   searchFilterRow: {
     flexDirection: 'row',
@@ -274,23 +340,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   filterButton: {
-    backgroundColor: 'gray', 
+    backgroundColor: 'gray',
     padding: 8,
     borderRadius: 5,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  dropdown: {
-    border: 2,
-    borderBlockColor: 'white'
-  },
-  dropdownText: {
-    color: '#888',
-    fontSize: 16,
-  },
-  dropdownIcon: {
-    color: '#888',
-    fontSize: 12,
   },
   dropdownOverlay: {
     flex: 1,
@@ -325,17 +379,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
-
-
     elevation: 5,
-
-
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
   },
-
   coachImage: {
     width: 80,
     height: 80,
@@ -410,23 +459,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '500',
-  },
-  matchesButton: {
-    position: 'absolute',
-    bottom: 75, // Increased to position above the tab bar
-    right: 10,
-    backgroundColor: 'white',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    zIndex: 1000,
   },
   modalTitle: {
     fontSize: 18,

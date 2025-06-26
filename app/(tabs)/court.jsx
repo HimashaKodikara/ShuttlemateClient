@@ -11,13 +11,16 @@ import {
   ActivityIndicator,
   RefreshControl,
   Modal,
-  FlatList
+  FlatList,
+  ImageBackground
 } from 'react-native';
 import { Feather, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config';
 import LottieView from 'lottie-react-native';
 import { useRoute } from '@react-navigation/native';
+import bg from '../../assets/backgorundimg.jpg'
+import CourtAvailability from '../components/CourtAvailability';
 
 const Courts = () => {
   const route = useRoute();
@@ -34,11 +37,15 @@ const Courts = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedArea, setSelectedArea] = useState('All Areas');
   const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+  
+  // Changed to object to track availability for each court individually
+  const [expandedCourts, setExpandedCourts] = useState({});
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Refresh data
     fetchCourts();
+     setExpandedCourts({});
+
     setRefreshing(false);
   };
 
@@ -111,7 +118,25 @@ const Courts = () => {
       });
   };
 
+  const handleBooking = (bookingDetails, court) => {
+    
+    // Show confirmation to user
+    alert(`Booking request sent on ${bookingDetails.date} at ${bookingDetails.timeSlot.start}-${bookingDetails.timeSlot.end}. Please wait for the confirmation from the court owner.`);
 
+    // Close the availability section after booking
+    setExpandedCourts(prev => ({
+      ...prev,
+      [court._id]: false
+    }));
+  };
+
+  // Function to toggle availability for specific court
+  const toggleAvailability = (courtId) => {
+    setExpandedCourts(prev => ({
+      ...prev,
+      [courtId]: !prev[courtId]
+    }));
+  };
 
   const selectArea = (area) => {
     setSelectedArea(area);
@@ -129,18 +154,21 @@ const Courts = () => {
   // Display loader while data is being fetched
   if (loading) {
     return (
+      <ImageBackground
+            source={bg}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          >
+            
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Courts</Text>
-          <TouchableOpacity style={styles.dropdown} disabled>
-            <Text style={styles.dropdownText}>Select the area</Text>
-            <Ionicons name="chevron-down" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color="#4A80F0" />
-        </View>
+        
+      <View style={[styles.container, styles.centered]}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.loadingText}>Loading coaches...</Text>
+            </View>
       </SafeAreaView>
+    
+      </ImageBackground>
     );
   }
 
@@ -166,6 +194,12 @@ const Courts = () => {
   }
 
   return (
+     <ImageBackground
+            source={bg}
+            style={styles.backgroundImage}
+            resizeMode="cover"
+          >
+            <View style={styles.overlay}>
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>
@@ -198,84 +232,112 @@ const Courts = () => {
       >
         {courts.length > 0 ? (
           courts.map((court) => (
-            <TouchableOpacity 
-              key={court._id} 
-              style={[
-                styles.courtCard,
-                selectedCourtId === court._id && styles.highlightedCard
-              ]} 
-              activeOpacity={0.92}
-              ref={ref => courtRefs.current[court._id] = ref}
-            >
-              <View style={styles.imageContainer}>
-                <Image source={{ uri: court.CourtPhoto }} style={styles.courtImage} />
-                <View style={styles.courtImageOverlay}>
-                  <View style={styles.priceBadge}>
-                    <Ionicons name="cash-outline" size={16} color="#fff" />
-                    <Text style={styles.priceText}>Rs. {court.Priceperhour}/hr</Text>
+            <View key={court._id}>
+              <TouchableOpacity 
+                style={[
+                  styles.courtCard,
+                  selectedCourtId === court._id && styles.highlightedCard
+                ]} 
+                activeOpacity={0.92}
+                ref={ref => courtRefs.current[court._id] = ref}
+              >
+                <View style={styles.imageContainer}>
+                  <Image source={{ uri: court.CourtPhoto }} style={styles.courtImage} />
+                  <View style={styles.courtImageOverlay}>
+                    <View style={styles.priceBadge}>
+                      <Ionicons name="cash-outline" size={16} color="#fff" />
+                      <Text style={styles.priceText}>Rs. {court.Priceperhour}/hr</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
 
-              <View style={styles.courtInfo}>
-                <Text style={styles.courtName}>{court.CourtName}</Text>
+                <View style={styles.courtInfo}>
+                  <Text style={styles.courtName}>{court.CourtName}</Text>
 
-                <View style={styles.infoSection}>
-                  <View style={styles.infoContainer}>
-                    <Ionicons name="location-outline" size={18} color="#fff" />
-                    <Text style={styles.infoText}>{court.place}</Text>
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoContainer}>
+                      <Ionicons name="location-outline" size={18} color="#fff" />
+                      <Text style={styles.infoText}>{court.place}</Text>
+                    </View>
+
+                    <View style={styles.infoContainer}>
+                     <TouchableOpacity 
+                       onPress={() => handlePhoneCall(court.Tel)} 
+                       style={styles.phoneContainer}
+                     >
+                      <Ionicons name="call-outline" size={18} color="#fff" />
+                      <Text style={styles.infoText}>{court.Tel}</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.infoContainer}>
+                      <Ionicons name="time-outline" size={18} color="#fff" />
+                      <Text style={styles.infoText}>{court.Openinghours}</Text>
+                    </View>
                   </View>
 
-                  <View style={styles.infoContainer}>
-                   <TouchableOpacity 
-                     onPress={() => handlePhoneCall(court.Tel)} 
-                     style={styles.phoneContainer}
-                   >
-                    <Ionicons name="call-outline" size={18} color="#fff" />
-                    <Text style={styles.infoText}>{court.Tel}</Text>
+                  <View style={styles.facilityContainer}>
+                    <Text style={styles.facilitiesTitle}>Facilities</Text>
+                    <View style={styles.facilitiesRow}>
+                      <View style={styles.facilityBadge}>
+                        <Ionicons name="water-outline" size={14} color="#fff" />
+                        <Text style={styles.facilityText}>Water</Text>
+                      </View>
+                      <View style={styles.facilityBadge}>
+                        <Ionicons name="car-outline" size={14} color="#fff" />
+                        <Text style={styles.facilityText}>Parking</Text>
+                      </View>
+                      <View style={styles.facilityBadge}>
+                        <Ionicons name="restaurant-outline" size={14} color="#fff" />
+                        <Text style={styles.facilityText}>Cafe</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Action buttons container */}
+                  <View style={styles.actionButtonsContainer}>
+                    <TouchableOpacity
+                      style={styles.navigateButton}
+                      onPress={() => {
+                        if (court.Directions && court.Directions.length > 0) {
+                          openMaps(court.Directions[0].latitude, court.Directions[0].longitude);
+                        } else {
+                          console.warn("No directions available for this court.");
+                        }
+                      }}
+                    >
+                      <Ionicons name="navigate-outline" size={18} color="#fff" />
+                      <Text style={styles.navigateText}>Navigate</Text>
+                    </TouchableOpacity>
+
+                    {/* Toggle Availability Button - Now separate from navigate button */}
+                    <TouchableOpacity 
+                      style={styles.availabilityButton}
+                      onPress={() => toggleAvailability(court._id)}
+                    >
+                      <Ionicons 
+                        name={expandedCourts[court._id] ? "calendar" : "calendar-outline"} 
+                        size={18} 
+                        color="#fff" 
+                      />
+                      <Text style={styles.availabilityButtonText}>
+                        {expandedCourts[court._id] ? 'Hide Availability' : 'View Availability'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
-
-                  <View style={styles.infoContainer}>
-                    <Ionicons name="time-outline" size={18} color="#fff" />
-                    <Text style={styles.infoText}>{court.Openinghours}</Text>
-                  </View>
                 </View>
+              </TouchableOpacity>
 
-                <View style={styles.facilityContainer}>
-                  <Text style={styles.facilitiesTitle}>Facilities</Text>
-                  <View style={styles.facilitiesRow}>
-                    <View style={styles.facilityBadge}>
-                      <Ionicons name="water-outline" size={14} color="#fff" />
-                      <Text style={styles.facilityText}>Water</Text>
-                    </View>
-                    <View style={styles.facilityBadge}>
-                      <Ionicons name="car-outline" size={14} color="#fff" />
-                      <Text style={styles.facilityText}>Parking</Text>
-                    </View>
-                    <View style={styles.facilityBadge}>
-                      <Ionicons name="restaurant-outline" size={14} color="#fff" />
-                      <Text style={styles.facilityText}>Cafe</Text>
-                    </View>
-                  </View>
+              {/* Availability Section - Now outside the card and full width */}
+              {expandedCourts[court._id] && (
+                <View style={styles.fullWidthAvailabilitySection}>
+                  <CourtAvailability 
+                    court={court} 
+                    onBooking={(bookingDetails) => handleBooking(bookingDetails, court)}
+                  />
                 </View>
-
-                <TouchableOpacity
-                  style={styles.navigateButton}
-                  onPress={() => {
-                    if (court.Directions && court.Directions.length > 0) {
-                      openMaps(court.Directions[0].latitude, court.Directions[0].longitude);
-                    } else {
-                      console.warn("No directions available for this court.");
-                    }
-                  }}
-                >
-                  <Ionicons name="navigate-outline" size={18} color="#fff" />
-                  <Text style={styles.navigateText}>Navigate</Text>
-                </TouchableOpacity>
-              </View>
-              
-            </TouchableOpacity>
+              )}
+            </View>
           ))
         ) : (
           <View style={styles.noDataContainer}>
@@ -292,8 +354,6 @@ const Courts = () => {
           </View>
         )}
       </ScrollView>
-      
-     
 
       {/* Area selection modal */}
       <Modal
@@ -337,18 +397,32 @@ const Courts = () => {
         </TouchableOpacity>
       </Modal>
     </SafeAreaView>
+    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+   backgroundImage: {
     flex: 1,
-    backgroundColor: '#0F0F1A',
-    paddingBottom:50
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10, 10, 26, 0.98)',
+    paddingBottom:180
   },
   header: {
     padding: 7,
-   
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop:350
+  },
+   loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
   headerTitle: {
      color: 'white',
@@ -380,13 +454,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   scrollView: {
-    padding: 16,
+    padding: 7,
   },
   courtCard: {
     backgroundColor: '#1A1A2E',
     borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -485,20 +559,53 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
   },
+  // New container for action buttons
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 8,
+  },
   navigateButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#4A80F0',
     borderRadius: 12,
     paddingVertical: 12,
-    marginTop: 8,
   },
   navigateText: {
     color: '#fff',
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 15,
+  },
+  // New availability button styles
+  availabilityButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#28A745',
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  availabilityButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    marginLeft: 8,
+    fontSize: 15,
+  },
+  // Updated full width availability section styles
+  fullWidthAvailabilitySection: {
+    marginHorizontal: 7, // Match scrollView padding
+    marginBottom: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden',
   },
   // Loader styles
   loaderContainer: {
@@ -554,29 +661,12 @@ const styles = StyleSheet.create({
     color: '#4A80F0',
     fontWeight: '500',
   },
-  matchesButton: {
-    position: 'absolute',
-    bottom: 75, // Increased to position above the tab bar
-    right: 10,
-    backgroundColor: 'white',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    zIndex: 1000,
-  },
   // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
-    alignmatchItems: 'center',
+    alignItems: 'center',
   },
   modalContent: {
     width: '85%',
@@ -585,8 +675,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     padding: 16,
-    marginHorizontal:"auto"
-    
   },
   modalTitle: {
     fontSize: 18,
