@@ -62,17 +62,15 @@ const CoachCard = ({ coach, visible, onRequestClose }) => {
 
   // Handle booking completion
   const handleBooking = (bookingDetails) => {
-    // Here you would typically make an API call to save the booking
-    console.log('Booking details:', bookingDetails);
+   
     
     // Show confirmation to user
-    alert(`Booking confirmed with ${coach.CoachName} on ${bookingDetails.date} at ${bookingDetails.timeSlot.start}-${bookingDetails.timeSlot.end}`);
-    
-    // Close the modal after booking
+    alert(`Booking request send to ${coach.CoachName} on ${bookingDetails.date} at ${bookingDetails.timeSlot.start}-${bookingDetails.timeSlot.end}.Please wait for the confirmation from the coach.`);
+ 
     onRequestClose();
   };
 
-  // Check if Courts are properly populated objects or just IDs
+ 
   const hasPopulatedCourts = coach.Courts?.length > 0 && 
     typeof coach.Courts[0] === 'object' && 
     coach.Courts[0] !== null &&

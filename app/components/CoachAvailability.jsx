@@ -267,12 +267,7 @@ const CoachAvailability = ({ coach, onBooking }) => {
           bookingId: response.data.data._id,
         });
         
-        // Show success message
-        Alert.alert(
-          'Booking Successful',
-          'Your session has been successfully booked. Please wait until the coach accepts your request.',
-          [{ text: 'OK' }]
-        );
+       
       } else {
         // Show error message
         Alert.alert(
