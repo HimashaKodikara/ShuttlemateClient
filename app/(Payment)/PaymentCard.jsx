@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, Button, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 import API_BASE_URL from '../../server/api.config';
 
 const PaymentCard = () => {
@@ -17,8 +18,6 @@ const PaymentCard = () => {
 
   const fetchPaymentSheetParams = async () => {
     try {
-    
-
       const totalAmount = parseFloat(params.total) || 0;
       if (totalAmount <= 0) {
         throw new Error(`Invalid payment amount: ${params.total}`);
@@ -33,7 +32,6 @@ const PaymentCard = () => {
         }
       };
 
-     
       const response = await fetch(`${API_BASE_URL}/payment/create-payment-intent`, {
         method: 'POST',
         headers: { 
@@ -42,7 +40,6 @@ const PaymentCard = () => {
         },
         body: JSON.stringify(requestBody)
       });
-      
       
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
@@ -108,8 +105,6 @@ const PaymentCard = () => {
         },
         allowsDelayedPaymentMethods: false,
       };
-
-      
 
       const { error } = await initPaymentSheet(initConfig);
 
@@ -189,10 +184,10 @@ const PaymentCard = () => {
   };
 
   useEffect(() => {
-    
     if (params.total && params.itemId && !initializationRef.current && !isInitializingRef.current) {
       initializePaymentSheet();
     } else if (initializationRef.current) {
+      // Already initialized
     } else if (!params.total || !params.itemId) {
       console.error('Missing required parameters:', {
         total: params.total,
@@ -208,9 +203,6 @@ const PaymentCard = () => {
     }
   }, []); 
 
-  useEffect(() => {
-  }, [params.total, params.itemId, params.quantity]); 
-
   const formatAmount = (amount) => {
     const num = parseFloat(amount) || 0;
     return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -218,26 +210,82 @@ const PaymentCard = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Complete Your Payment</Text>
-      <Text style={styles.subtitle}>
-        Total: LKR {formatAmount(params.total)}
-      </Text>
-      
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1F3B8B" />
-          <Text style={styles.loadingText}>
-            {ready ? 'Processing payment...' : 'Setting up payment...'}
-          </Text>
+      {/* Header Section */}
+      <View style={styles.headerSection}>
+        <View style={styles.iconContainer}>
+          <MaterialIcons name="payment" size={32} color="#4F46E5" />
         </View>
-      ) : (
-        <Button 
-          title="Pay Now" 
-          onPress={handlePayment} 
-          disabled={!ready}
-          color="#1F3B8B"
-        />
-      )}
+        <Text style={styles.title}>Complete Your Payment</Text>
+        <Text style={styles.description}>
+          Secure payment powered by Stripe
+        </Text>
+      </View>
+
+      {/* Amount Section */}
+      <View style={styles.amountSection}>
+        <Text style={styles.amountLabel}>Total Amount</Text>
+        <View style={styles.amountContainer}>
+          <Text style={styles.currency}>LKR</Text>
+          <Text style={styles.amount}>{formatAmount(params.total)}</Text>
+        </View>
+        <View style={styles.divider} />
+      </View>
+
+      {/* Payment Button Section */}
+      <View style={styles.buttonSection}>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <View style={styles.loadingCard}>
+              <ActivityIndicator size="large" color="#4F46E5" />
+              <Text style={styles.loadingText}>
+                {ready ? 'Processing payment...' : 'Setting up payment...'}
+              </Text>
+              <View style={styles.loadingDots}>
+                <View style={[styles.dot, styles.dot1]} />
+                <View style={[styles.dot, styles.dot2]} />
+                <View style={[styles.dot, styles.dot3]} />
+              </View>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.payButton, !ready && styles.payButtonDisabled]}
+            onPress={handlePayment}
+            disabled={!ready}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.payButtonGradient, !ready && styles.payButtonGradientDisabled]}>
+              <View style={styles.payButtonContent}>
+                <MaterialIcons 
+                  name="lock" 
+                  size={20} 
+                  color="#FFFFFF" 
+                  style={styles.lockIcon} 
+                />
+                <Text style={styles.payButtonText}>
+                  {ready ? 'Pay Securely' : 'Preparing...'}
+                </Text>
+                <MaterialIcons 
+                  name="arrow-forward" 
+                  size={20} 
+                  color="#FFFFFF" 
+                />
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Security Footer */}
+      <View style={styles.securityFooter}>
+        <View style={styles.securityBadge}>
+          <MaterialIcons name="security" size={16} color="#10B981" />
+          <Text style={styles.securityText}>256-bit SSL encryption</Text>
+        </View>
+        <Text style={styles.footerText}>
+          Your payment information is secure and encrypted
+        </Text>
+      </View>
     </View>
   );
 };
@@ -246,29 +294,197 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0A0A1A',
-    justifyContent: 'center',
     padding: 24,
   },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#ccc',
-    fontSize: 18,
+  
+  // Header Section
+  headerSection: {
+    alignItems: 'center',
+    marginTop: 40,
     marginBottom: 40,
-    textAlign: 'center',
   },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(79, 70, 229, 0.2)',
+  },
+  title: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  description: {
+    color: '#9CA3AF',
+    fontSize: 16,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+
+  // Amount Section
+  amountSection: {
+    backgroundColor: 'rgba(31, 41, 55, 0.8)',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(75, 85, 99, 0.3)',
+  },
+  amountLabel: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  amountContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  currency: {
+    color: '#D1D5DB',
+    fontSize: 18,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  amount: {
+    color: '#FFFFFF',
+    fontSize: 36,
+    fontWeight: '800',
+    letterSpacing: -1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(75, 85, 99, 0.3)',
+    marginHorizontal: 16,
+  },
+
+  // Button Section
+  buttonSection: {
+    marginBottom: 32,
+  },
+  payButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+  },
+  payButtonDisabled: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+  },
+  payButtonGradient: {
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    backgroundColor: '#4F46E5',
+  },
+  payButtonGradientDisabled: {
+    backgroundColor: '#6B7280',
+  },
+  payButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockIcon: {
+    marginRight: 12,
+  },
+  payButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+
+  // Loading States
   loadingContainer: {
     alignItems: 'center',
   },
+  loadingCard: {
+    backgroundColor: 'rgba(31, 41, 55, 0.8)',
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(75, 85, 99, 0.3)',
+    minWidth: 200,
+  },
   loadingText: {
-    color: '#ccc',
-    marginTop: 12,
+    color: '#D1D5DB',
+    marginTop: 16,
     fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    marginTop: 16,
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4F46E5',
+  },
+  dot1: {
+    opacity: 1,
+  },
+  dot2: {
+    opacity: 0.6,
+  },
+  dot3: {
+    opacity: 0.3,
+  },
+
+  // Security Footer
+  securityFooter: {
+    alignItems: 'center',
+    marginTop: 'auto',
+    paddingTop: 24,
+  },
+  securityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  securityText: {
+    color: '#10B981',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  footerText: {
+    color: '#6B7280',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 
