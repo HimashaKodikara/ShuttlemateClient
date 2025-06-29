@@ -35,10 +35,8 @@ const PaymentAddress = () => {
   const [firebaseUid, setFirebaseUid] = useState(null);
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
 
-  // Get the itemId from route params
   const itemId = params?.itemId;
   
-  // Check login status and fetch user data on component mount
   useEffect(() => {
     const checkLoginAndFetchData = async () => {
       try {
@@ -95,7 +93,7 @@ const PaymentAddress = () => {
   }, []);
 
   const handleSave = async () => {
-    // First, check if firebaseUid exists
+
     if (!firebaseUid) {
       Alert.alert('Error', 'User ID not found. Please log in again.');
       return;
