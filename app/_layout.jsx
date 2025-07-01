@@ -87,7 +87,6 @@ const RootLayout = () => {
               });
               
               if (response.ok) {
-                console.log("Token registered successfully");
               } else {
                 console.error("Failed to register token:", response.status);
               }
@@ -175,7 +174,7 @@ const RootLayout = () => {
         <Stack.Screen name="(Payment)" options={{ headerShown: false }} />
         <Stack.Screen name="search/[query]" options={{ headerShown: false }} />
         <Stack.Screen name="searchcoach/[query1]" options={{ headerShown: false }} />
-        <Stack.Screen name="match/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="match" options={{ headerShown: false }} />
         <Stack.Screen name="court/[id]" options={{ headerShown: false }} />
       </Stack>
     </StripeProvider>

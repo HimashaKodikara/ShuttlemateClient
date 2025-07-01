@@ -2,6 +2,7 @@
   "expo": {
     "name": "shuttlemate",
     "slug": "shuttlemate",
+     "scheme": "shuttlemate",
     "version": "1.0.0",
     "orientation": "portrait",
     
