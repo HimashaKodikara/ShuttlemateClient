@@ -345,7 +345,7 @@ const Items = () => {
         >
           {filteredProducts.map(product => (
             <TouchableOpacity 
-              key={product.id} 
+              key={product._id} 
               style={styles.productCard}
               onPress={() => handleProductSelect(product)}
             >
