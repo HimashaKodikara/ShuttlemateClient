@@ -13,13 +13,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "icon": "../assets/logo.png",
+    "icon": "./assets/logo.png",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-      "foregroundImage": "../assets/logo.png", 
+      "foregroundImage": "./assets/logo.png", 
         "backgroundColor": "#ffffff"
         
       },
