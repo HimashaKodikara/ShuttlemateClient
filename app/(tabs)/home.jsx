@@ -8,8 +8,7 @@ import Trending from '../components/Trending';
 import EmptyState from '../components/EmptyState';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { signOut } from 'firebase/auth';
-import { FIREBASE_AUTH } from '../../firebaseconfig';
+import { getAuth, signOut } from '@react-native-firebase/auth';
 import { router } from 'expo-router';
 import VideoCard from '../components/VideoCard';
 import API_BASE_URL from '../../server/api.config';
@@ -68,6 +67,8 @@ const Home = () => {
   const [trendingVideos, setTrendingVideos] = useState([]);
   const [badmintonNews, setBadmintonNews] = useState(SAMPLE_NEWS);
   const [loading, setLoading] = useState(true);
+  const auth = getAuth();
+
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -139,30 +140,31 @@ const Home = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogout = async () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Logout",
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem('loginTimestamp');
-              await signOut(FIREBASE_AUTH);
-              router.replace('/sign-in');
-            } catch (error) {
-              console.error("Error signing out: ", error);
-            }
+  
+const handleLogout = async () => {
+  Alert.alert(
+    "Logout",
+    "Are you sure you want to logout?",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        onPress: async () => {
+          try {
+            await AsyncStorage.removeItem('loginTimestamp');
+            const auth = getAuth(); // modular
+            await signOut(auth);
+            router.replace('/sign-in');
+          } catch (error) {
+            console.error("Logout error: ", error);
+            Alert.alert("Error", "Failed to log out. Try again.");
           }
         }
-      ]
-    );
-  };
+      }
+    ]
+  );
+};
+
 
   const getCategoryColor = (category) => {
     const colors = {

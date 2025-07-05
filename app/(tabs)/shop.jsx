@@ -25,6 +25,11 @@ const Shop = () => {
   const [selectedShop, setSelectedShop] = useState(null)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
+  // Function to check if item is available
+  const isItemAvailable = (availableQty) => {
+    return availableQty && availableQty > 0;
+  }
+
   const onRefresh = async () => {
     setRefreshing(true)
     // Refresh data
@@ -207,7 +212,19 @@ const Shop = () => {
             />
           </View>
         )}
-        <Text style={styles.itemPrice}>Rs.{item.price.toLocaleString()}</Text>
+        <View style={styles.availabilityContainer}>
+          <Text style={[
+            styles.availabilityText,
+            isItemAvailable(item.availableqty) ? styles.availableText : styles.unavailableText
+          ]}>
+            {isItemAvailable(item.availableqty) ? 'Available' : 'Out of Stock'}
+          </Text>
+          {isItemAvailable(item.availableqty) && (
+            <Text style={styles.quantityText}>
+              ({item.availableqty} left)
+            </Text>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   )
@@ -476,12 +493,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#fff'
   },
-  itemPrice: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
   // New color container style for the dot and text
   colorContainer: {
     flexDirection: 'row',
@@ -500,6 +511,27 @@ const styles = StyleSheet.create({
   itemColor: {
     fontSize: 14,
     color: '#fff',
+  },
+  // New availability styles
+  availabilityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  availabilityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  availableText: {
+    color: '#4CAF50', // Green for available
+  },
+  unavailableText: {
+    color: '#F44336', // Red for out of stock
+  },
+  quantityText: {
+    fontSize: 12,
+    color: '#aaa',
   },
   centered: {
     flex: 1,

@@ -1,17 +1,129 @@
 import React, { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { Alert, View, Text } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import { StripeProvider } from '@stripe/stripe-react-native';
-import { Stack } from 'expo-router';
+import { Stack, Slot } from 'expo-router';
 import { router } from 'expo-router';
 import API_BASE_URL from '../server/api.config';
+import Toast from 'react-native-toast-message';
+
+// Toast configuration - MOVED TO TOP
+const toastConfig = {
+  success: (props) => (
+    <View style={{ 
+      height: 60, 
+      width: '90%', 
+      backgroundColor: '#4CAF50',
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'center',
+      marginHorizontal: 20,
+      paddingHorizontal: 15,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    }}>
+      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+        {props.text1}
+      </Text>
+      {props.text2 && (
+        <Text style={{ color: 'white', fontSize: 14, marginTop: 4 }}>
+          {props.text2}
+        </Text>
+      )}
+    </View>
+  ),
+  error: (props) => (
+    <View style={{ 
+      height: 60, 
+      width: '90%', 
+      backgroundColor: '#F44336',
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'center',
+      marginHorizontal: 20,
+      paddingHorizontal: 15,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    }}>
+      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+        {props.text1}
+      </Text>
+      {props.text2 && (
+        <Text style={{ color: 'white', fontSize: 14, marginTop: 4 }}>
+          {props.text2}
+        </Text>
+      )}
+    </View>
+  ),
+  info: (props) => (
+    <View style={{ 
+      height: 60, 
+      width: '90%', 
+      backgroundColor: '#2196F3',
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'center',
+      marginHorizontal: 20,
+      paddingHorizontal: 15,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    }}>
+      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+        {props.text1}
+      </Text>
+      {props.text2 && (
+        <Text style={{ color: 'white', fontSize: 14, marginTop: 4 }}>
+          {props.text2}
+        </Text>
+      )}
+    </View>
+  ),
+  warning: (props) => (
+    <View style={{ 
+      height: 60, 
+      width: '90%', 
+      backgroundColor: '#FF9800',
+      borderRadius: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'center',
+      marginHorizontal: 20,
+      paddingHorizontal: 15,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.84,
+      elevation: 5,
+    }}>
+      <Text style={{ color: 'white', fontSize: 16, fontWeight: '600' }}>
+        {props.text1}
+      </Text>
+      {props.text2 && (
+        <Text style={{ color: 'white', fontSize: 14, marginTop: 4 }}>
+          {props.text2}
+        </Text>
+      )}
+    </View>
+  ),
+};
 
 const RootLayout = () => {
   // Navigation handler for notifications
   const handleNotificationNavigation = (data) => {
     try {
       if (data?.screen) {
-        
         switch (data.screen) {
           case 'profile':
             router.push('/(tabs)/profile');
@@ -25,15 +137,12 @@ const RootLayout = () => {
             }
             break;
           case 'match':
-            
             if (data.matchId) {
               router.push('/(tabs)/matches'); 
             }
             break;
           case 'court':
-          
             if (data.courtId) {
-            
               router.push('/(tabs)/court'); 
             }
             break;
@@ -42,24 +151,19 @@ const RootLayout = () => {
               router.push('/(tabs)/coach');
             }
             break;
-          
           case 'shop':
             router.push('/(tabs)/shop');
             break;
           default:
-         
             router.push('/(tabs)');
         }
       } else if (data?.url) {
-     
         router.push(data.url);
       } else {
-    
         router.push('/(tabs)');
       }
     } catch (error) {
       console.error('Navigation error:', error);
-     
       router.push('/(tabs)');
     }
   };
@@ -87,6 +191,7 @@ const RootLayout = () => {
               });
               
               if (response.ok) {
+                // Token registered successfully
               } else {
                 console.error("Failed to register token:", response.status);
               }
@@ -98,23 +203,21 @@ const RootLayout = () => {
           console.log("FCM permission denied");
         }
 
-        
+        // Handle notification when app is opened from quit state
         messaging()
           .getInitialNotification()
           .then(remoteMessage => {
             if (remoteMessage) {
               console.log('Opened from quit state:', remoteMessage.notification);
-            
               setTimeout(() => {
                 handleNotificationNavigation(remoteMessage.data);
               }, 1000); 
             }
           });
 
-        
+        // Handle notification when app is opened from background
         messaging().onNotificationOpenedApp(remoteMessage => {
           console.log('Opened from background state:', remoteMessage.notification);
-          // Navigate when app is opened from background
           handleNotificationNavigation(remoteMessage.data);
         });
 
@@ -123,7 +226,7 @@ const RootLayout = () => {
           console.log('Handled in background:', remoteMessage);
         });
 
-  
+        // Handle foreground notifications
         unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
           const notification = remoteMessage.notification;
           const data = remoteMessage.data;
@@ -165,18 +268,18 @@ const RootLayout = () => {
   }, []);
 
   return (
-    <StripeProvider publishableKey="pk_test_51QJef7RwP0CS6vlpJKa4aIbmfRJdUMqt8K4Lm1dBEM63cbBBvBgHLbpblPVZND1G7iNtTVhNEqCqk1YcFVgWFlqL0084kYVZX8">
+    <StripeProvider
+      publishableKey="pk_test_51QJef7RwP0CS6vlpJKa4aIbmfRJdUMqt8K4Lm1dBEM63cbBBvBgHLbpblPVZND1G7iNtTVhNEqCqk1YcFVgWFlqL0084kYVZX8"
+      merchantIdentifier="merchant.com.shuttlemate"
+    >
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(ItemPurchase)" options={{ headerShown: false }} />
         <Stack.Screen name="(Payment)" options={{ headerShown: false }} />
-        <Stack.Screen name="search/[query]" options={{ headerShown: false }} />
-        <Stack.Screen name="searchcoach/[query1]" options={{ headerShown: false }} />
-        <Stack.Screen name="match" options={{ headerShown: false }} />
-        <Stack.Screen name="court/[id]" options={{ headerShown: false }} />
       </Stack>
+      <Toast config={toastConfig} />
     </StripeProvider>
   );
 };

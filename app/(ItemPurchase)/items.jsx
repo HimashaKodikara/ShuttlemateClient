@@ -83,6 +83,11 @@ const Items = () => {
     return '#CCCCCC';
   }
 
+  // Function to check if item is available
+  const isItemAvailable = (availableQty) => {
+    return availableQty && availableQty > 0;
+  }
+
   // Function to fetch shop details
   const fetchShopDetails = async (id) => {
     try {
@@ -169,7 +174,8 @@ const Items = () => {
               category: category.categoryName,
               categoryId: category.categoryId,
               shopId: item.shopId,
-              shopName: item.shopName
+              shopName: item.shopName,
+              availableqty: item.availableqty
             });
           });
         });
@@ -224,7 +230,8 @@ const Items = () => {
             price: item.price,
             color: item.color,
             image: item.itemphoto,
-            category: category
+            category: category,
+            availableqty: item.availableqty
           }));
           setFilteredProducts(categoryItems);
         } else {
@@ -374,7 +381,19 @@ const Items = () => {
                     />
                   </View>
                 )}
-                <Text style={styles.productPrice}>Rs. {parseInt(product.price).toLocaleString()}</Text>
+                <View style={styles.availabilityContainer}>
+                  <Text style={[
+                    styles.availabilityText,
+                    isItemAvailable(product.availableqty) ? styles.availableText : styles.unavailableText
+                  ]}>
+                    {isItemAvailable(product.availableqty) ? 'Available' : 'Out of Stock'}
+                  </Text>
+                  {isItemAvailable(product.availableqty) && (
+                    <Text style={styles.quantityText}>
+                      ({product.availableqty} left)
+                    </Text>
+                  )}
+                </View>
                 
                 {!shopId && product.shopName && (
                   <Text style={styles.shopName}>{product.shopName}</Text>
@@ -496,12 +515,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#fff'
   },
-  productPrice: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
   shopName: {
     color: '#666',
     fontSize: 12,
@@ -523,6 +536,27 @@ const styles = StyleSheet.create({
   },
   itemColor: {
     fontSize: 14,
+    color: '#aaa',
+  },
+  // New availability styles
+  availabilityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  availabilityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  availableText: {
+    color: '#4CAF50', // Green for available
+  },
+  unavailableText: {
+    color: '#F44336', // Red for out of stock
+  },
+  quantityText: {
+    fontSize: 12,
     color: '#aaa',
   },
   emptyContainer: {

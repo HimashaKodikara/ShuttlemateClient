@@ -24,7 +24,8 @@
         
       },
       "permissions": ["INTERNET"],
-      "package": "com.anonymous.shuttlemate"
+      "package": "com.anonymous.shuttlemate",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/SC.jpg"

@@ -4,8 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import images from '../../constants/images.js'
 import logo from '../../constants/icons.js';
 import { router } from 'expo-router';
-import { FIREBASE_AUTH } from '../../firebaseconfig.js';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signInWithCredential, GoogleAuthProvider } from '@react-native-firebase/auth';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import icons from '../../constants/icons.js';
@@ -14,16 +13,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config.js';
 
-
 // Make sure to call this at the top level
 WebBrowser.maybeCompleteAuthSession();
+
+// Initialize Firebase Auth
+const auth = getAuth();
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setshowPassword] = useState(false);
-  const auth = FIREBASE_AUTH;
 
   useEffect(() => {
     const setLoginTimestamp = async () => {
@@ -48,10 +48,8 @@ const SignIn = () => {
     }
   }, [response]);
 
-
   const fetchUserDataAndStoreUserId = async (userEmail) => {
     try {
-     
       const response = await axios.get(`${API_BASE_URL}/user?email=${userEmail}`);
       
       if (response.data && response.data.length > 0) {
@@ -71,10 +69,8 @@ const SignIn = () => {
         console.log('No user found with this email in the database');
         
         // Handle case where user exists in Firebase but not in MongoDB
-        // You might want to create a new user in MongoDB here
         const newUserResponse = await createUserInMongoDB(userEmail, auth.currentUser.uid);
         if (newUserResponse && newUserResponse._id) {
-         // await AsyncStorage.setItem('userId', newUserResponse._id);
           await AsyncStorage.setItem('firebaseUid', auth.currentUser.uid);
           return newUserResponse;
         }
@@ -87,16 +83,13 @@ const SignIn = () => {
     }
   };
   
-  // Add this helper function to create a user in MongoDB if they don't exist
   const createUserInMongoDB = async (email, firebaseUid) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/user`, {
         email,
         firebaseUid,
-        // Add any other default fields you need
       });
       
-     
       return response.data;
     } catch (error) {
       console.error('Error creating user in MongoDB:', error);
@@ -104,152 +97,59 @@ const SignIn = () => {
     }
   };
 
-  // const login = async () => {
-  //   // Validate input fields
-  //   if (!email || !password) {
-  //     // Show toast message for empty fields
-  //     Toast.show({
-  //       type: 'error',
-  //       position: 'top',
-  //       text1: 'Error',
-  //       text2: 'Please enter both email and password',
-  //       visibilityTime: 3000,
-  //       autoHide: true,
-  //       topOffset: 30,
-  //       bottomOffset: 40,
-  //     });
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   try {
-  //     const response = await signInWithEmailAndPassword(auth, email, password);
-      
-  //     // Fetch user data from your backend and store the user ID
-  //     const userData = await fetchUserDataAndStoreUserId(email);
-      
-  //     if (!userData) {
-  //       Toast.show({
-  //         type: 'warning',
-  //         position: 'top',
-  //         text1: 'Warning',
-  //         text2: 'User found in Firebase but not in database',
-  //         visibilityTime: 3000,
-  //         autoHide: true,
-  //       });
-  //     }
-      
-  //     // Handle successful login
-  //     Toast.show({
-  //       type: 'success',
-  //       position: 'top',
-  //       text1: 'Success',
-  //       text2: 'Successfully logged in',
-  //       visibilityTime: 3000,
-  //       autoHide: true,
-  //     });
-      
-  //     // Navigate after showing success toast
-  //     setTimeout(() => {
-  //       router.push('/home');
-  //     }, 1000);
-  //   } catch (error) {
-  //     console.log(error);
-
-  //     // Handle specific Firebase auth errors with user-friendly messages
-  //     let errorTitle = "Login Failed";
-  //     let errorMessage = error.message;
-      
-  //     if (error.code === 'auth/invalid-email') {
-  //       errorMessage = 'Please enter a valid email address.';
-  //     } else if (error.code === 'auth/user-not-found') {
-  //       errorMessage = 'No account found with this email address.';
-  //     } else if (error.code === 'auth/wrong-password') {
-  //       errorMessage = 'Incorrect password. Please try again.';
-  //     } else if (error.code === 'auth/too-many-requests') {
-  //       errorMessage = 'Too many failed login attempts. Please try again later.';
-  //     }
-
-  //     // Show toast for error
-  //     Toast.show({
-  //       type: 'error',
-  //       position: 'top',
-  //       text1: errorTitle,
-  //       text2: errorMessage,
-  //       visibilityTime: 3000,
-  //       autoHide: true,
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }
   const login = async () => {
-    // Validate input fields
     if (!email || !password) {
       Toast.show({
         type: 'error',
-        position: 'top',
         text1: 'Error',
         text2: 'Please enter both email and password',
         visibilityTime: 3000,
         autoHide: true,
-        topOffset: 30,
-        bottomOffset: 40,
+        topOffset: 60,
       });
       return;
     }
-  
+
     setLoading(true);
     try {
-      // First clear any existing user data
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('firebaseUid');
-      
-      const response = await signInWithEmailAndPassword(auth, email, password);
-     
-      
-      // Fetch user data from your backend and store the user ID
+
+      const authInstance = getAuth();
+      const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
+
       const userData = await fetchUserDataAndStoreUserId(email);
-      
+
       if (!userData) {
         Toast.show({
-          type: 'warning',
-          position: 'top',
+          type: 'info',
           text1: 'Account Setup',
           text2: 'Setting up your account details...',
           visibilityTime: 3000,
           autoHide: true,
+          topOffset: 60,
         });
       }
-      
-      // Verify we have a MongoDB ID before proceeding
+
       const storedUserId = await AsyncStorage.getItem('userId');
-      if (!storedUserId) {
-        throw new Error('Failed to retrieve or create MongoDB user ID');
-      }
-      
-      // Handle successful login
-      Toast.show({
-        type: 'success',
-        position: 'top',
-        text1: 'Success',
-        text2: 'Successfully logged in',
-        visibilityTime: 3000,
+      if (!storedUserId) throw new Error('Failed to retrieve or create MongoDB user ID');
+
+      Toast.show({ 
+        type: 'success', 
+        text1: 'Success', 
+        text2: 'Logged in!',
+        visibilityTime: 2000,
         autoHide: true,
+        topOffset: 60,
       });
       
-      // Navigate after showing success toast
-      setTimeout(() => {
-        router.push('/home');
-      }, 1000);
+      setTimeout(() => router.push('/home'), 1000);
     } catch (error) {
       console.log(error);
-      
-      // Error handling as before
+
       let errorTitle = "Login Failed";
       let errorMessage = error.message;
       
-      // Handle specific Firebase auth errors
       if (error.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address.';
       } else if (error.code === 'auth/user-not-found') {
@@ -259,68 +159,58 @@ const SignIn = () => {
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed login attempts. Please try again later.';
       }
-  
+
       Toast.show({
         type: 'error',
-        position: 'top',
         text1: errorTitle,
         text2: errorMessage,
-        visibilityTime: 3000,
+        visibilityTime: 4000,
         autoHide: true,
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const signInWithGoogle = async (credential) => {
-    setLoading(true);
-    try {
-      // Clear existing user data
-      await AsyncStorage.removeItem('userId');
-      await AsyncStorage.removeItem('firebaseUid');
-      
-      // Sign-in with the credential
-      const userCredential = await signInWithCredential(auth, credential);
-      console.log('Google sign-in successful:', userCredential.user.email);
-      
-      // Fetch user data from your backend using the email
-      const userData = await fetchUserDataAndStoreUserId(userCredential.user.email);
-      
-      // Verify we have a MongoDB ID before proceeding
-      const storedUserId = await AsyncStorage.getItem('userId');
-      if (!storedUserId) {
-        throw new Error('Failed to retrieve or create MongoDB user ID');
-      }
-      
-      Toast.show({
-        type: 'success',
-        position: 'bottom',
-        text1: 'Success',
-        text2: 'Successfully logged in with Google',
-        visibilityTime: 2000,
-      });
-  
-      // Navigate to home page after toast shows
-      setTimeout(() => {
-        router.push('/home');
-      }, 1000);
-    } catch (error) {
-      console.log('Google Sign-In Error:', error);
-  
-      Toast.show({
-        type: 'error',
-        position: 'bottom',
-        text1: 'Google Sign-In Failed',
-        text2: 'An error occurred during Google sign-in. Please try again.',
-        visibilityTime: 3000,
+        topOffset: 60,
       });
     } finally {
       setLoading(false);
     }
   };
 
-  // JSX return remains mostly the same
+  const signInWithGoogle = async (credential) => {
+    setLoading(true);
+    try {
+      await AsyncStorage.removeItem('userId');
+      await AsyncStorage.removeItem('firebaseUid');
+
+      const authInstance = getAuth();
+      const userCredential = await signInWithCredential(authInstance, credential);
+
+      const userData = await fetchUserDataAndStoreUserId(userCredential.user.email);
+
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (!storedUserId) throw new Error('Failed to retrieve or create MongoDB user ID');
+
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Successfully logged in with Google',
+        visibilityTime: 2000,
+        autoHide: true,
+        topOffset: 60,
+      });
+      
+      setTimeout(() => router.push('/home'), 1000);
+    } catch (error) {
+      Toast.show({
+        type: 'error',
+        text1: 'Google Sign-In Failed',
+        text2: 'An error occurred during Google sign-in. Please try again.',
+        visibilityTime: 4000,
+        autoHide: true,
+        topOffset: 60,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -336,7 +226,6 @@ const SignIn = () => {
             </Text>
           </TouchableOpacity>
 
-          {/* Email & Password fields remain the same */}
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email address</Text>
             <TextInput
@@ -391,7 +280,6 @@ const SignIn = () => {
             <View style={styles.divider} />
           </View>
 
-          {/* Google Sign-In button */}
           <TouchableOpacity
             style={styles.googleButton}
             onPress={() => promptAsync()}
@@ -420,14 +308,13 @@ const SignIn = () => {
         </View>
       </ScrollView>
       
-      {/* This line ensures Toast is properly rendered in your component hierarchy */}
+      {/* Toast component placed at the bottom of the component */}
       <Toast />
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  // Your existing styles
   container: {
     flex: 1,
     backgroundColor: '#0A0A1A',
@@ -444,7 +331,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
     marginBottom: 8,
-    marginTop:50
+    marginTop: 50
   },
   newUserText: {
     fontSize: 14,
