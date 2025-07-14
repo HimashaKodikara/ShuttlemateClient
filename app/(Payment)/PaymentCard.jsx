@@ -29,7 +29,6 @@ const PaymentCard = () => {
         const storedUserId = await AsyncStorage.getItem('firebaseUid');
         
         if (!storedUserId) {
-          console.log('No user ID found in storage');
           Alert.alert(
             'Login Required',
             'Please log in to complete your payment',
@@ -67,19 +66,26 @@ const PaymentCard = () => {
   const fetchPaymentSheetParams = async () => {
     try {
       const totalAmount = parseFloat(params.total) || 0;
+      const quantity = parseInt(params.quantity) || 1; // Get quantity from params
+      
       if (totalAmount <= 0) {
         throw new Error(`Invalid payment amount: ${params.total}`);
       }
 
+      if (quantity <= 0) {
+        throw new Error(`Invalid quantity: ${params.quantity}`);
+      }
+
       const requestBody = {
-        amount: Math.round(totalAmount * 100),
+        amount: Math.round(totalAmount * 100), // Convert to cents
         currency: 'lkr',
         metadata: { 
           itemId: params.itemId?.toString() || '', 
-          quantity: params.quantity?.toString() || '1',
-          userId: firebaseUid || '' // Add Firebase UID to metadata
+          quantity: quantity.toString(), // Use quantity from params
+          userId: firebaseUid || '' // Use Firebase UID
         }
       };
+
 
       const response = await fetch(`${API_BASE_URL}/payment/create-payment-intent`, {
         method: 'POST',
@@ -94,12 +100,9 @@ const PaymentCard = () => {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
-          console.log('Error response data:', errorData);
           errorMessage = errorData.error || errorMessage;
         } catch (parseError) {
-          const textError = await response.text();
-          console.log('Error response text:', textError);
-          errorMessage = textError || errorMessage;
+          const textError = await response.text();          errorMessage = textError || errorMessage;
         }
         throw new Error(errorMessage);
       }
@@ -206,17 +209,23 @@ const PaymentCard = () => {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
       try {
+        const quantity = parseInt(params.quantity) || 1; // Get quantity from params
+        
+        const savePaymentBody = {
+          userId: firebaseUid, // Use Firebase UID
+          itemId: params.itemId?.toString() || '',
+          quantity: quantity, // Use quantity from params
+          amount: parseFloat(params.total) || 0,
+          currency: 'lkr',
+          paymentIntentId: paymentIntentId,
+          status: 'succeeded'
+        };
+
+
         const saveResponse = await fetch(`${API_BASE_URL}/payment/save-payment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: firebaseUid, // Use Firebase UID instead of hardcoded value
-            itemId: params.itemId?.toString() || '',
-            amount: parseFloat(params.total) || 0,
-            currency: 'lkr',
-            paymentIntentId: paymentIntentId,
-            status: 'succeeded'
-          })
+          body: JSON.stringify(savePaymentBody)
         });
 
         if (!saveResponse.ok) {
@@ -249,10 +258,34 @@ const PaymentCard = () => {
   // Initialize payment sheet when Firebase UID is available
   useEffect(() => {
     if (params.total && params.itemId && firebaseUid && !initializationRef.current && !isInitializingRef.current && !isCheckingLogin) {
+      // Validate required parameters
+      const totalAmount = parseFloat(params.total);
+      const quantity = parseInt(params.quantity);
+      
+      if (totalAmount <= 0) {
+        Alert.alert('Error', 'Invalid payment amount. Please go back and try again.', [
+          {
+            text: 'OK',
+            onPress: () => router.back()
+          }
+        ]);
+        return;
+      }
+
+      if (!quantity || quantity <= 0) {
+        Alert.alert('Error', 'Invalid quantity. Please go back and try again.', [
+          {
+            text: 'OK',
+            onPress: () => router.back()
+          }
+        ]);
+        return;
+      }
+
       initializePaymentSheet();
     } else if (initializationRef.current) {
       // Already initialized
-    } else if (!params.total || !params.itemId) {
+    } else if (!params.total || !params.itemId || !params.quantity) {
       console.error('Missing required parameters:', {
         total: params.total,
         itemId: params.itemId,
@@ -304,6 +337,12 @@ const PaymentCard = () => {
           <Text style={styles.currency}>LKR</Text>
           <Text style={styles.amount}>{formatAmount(params.total)}</Text>
         </View>
+        
+        {/* Show quantity info */}
+        <View style={styles.quantityInfo}>
+          <Text style={styles.quantityLabel}>Quantity: {params.quantity || 1}</Text>
+        </View>
+        
         <View style={styles.divider} />
       </View>
 
@@ -445,6 +484,15 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: '800',
     letterSpacing: -1,
+  },
+  quantityInfo: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  quantityLabel: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    fontWeight: '500',
   },
   divider: {
     height: 1,
