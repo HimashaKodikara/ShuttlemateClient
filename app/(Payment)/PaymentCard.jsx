@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } fr
 import { useStripe } from '@stripe/stripe-react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../../server/api.config';
 
 const PaymentCard = () => {
@@ -11,10 +12,57 @@ const PaymentCard = () => {
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [paymentIntentId, setPaymentIntentId] = useState(null);
+  const [firebaseUid, setFirebaseUid] = useState(null);
+  const [isCheckingLogin, setIsCheckingLogin] = useState(true);
   
   // Prevent multiple initializations
   const initializationRef = useRef(false);
   const isInitializingRef = useRef(false);
+
+  // Check login status and get Firebase UID
+  useEffect(() => {
+    const checkLoginAndGetUid = async () => {
+      try {
+        setIsCheckingLogin(true);
+        
+        // Get user ID from AsyncStorage
+        const storedUserId = await AsyncStorage.getItem('firebaseUid');
+        
+        if (!storedUserId) {
+          console.log('No user ID found in storage');
+          Alert.alert(
+            'Login Required',
+            'Please log in to complete your payment',
+            [
+              {
+                text: 'Cancel',
+                onPress: () => router.back(),
+                style: 'cancel',
+              },
+              {
+                text: 'Go to Login',
+                onPress: () => router.replace('/sign-in'),
+              },
+            ]
+          );
+          return;
+        }
+        
+        setFirebaseUid(storedUserId);
+        
+      } catch (error) {
+        console.error('Error retrieving Firebase UID:', error);
+        Alert.alert(
+          'Error',
+          'Failed to retrieve user information. Please try again.'
+        );
+      } finally {
+        setIsCheckingLogin(false);
+      }
+    };
+
+    checkLoginAndGetUid();
+  }, []);
 
   const fetchPaymentSheetParams = async () => {
     try {
@@ -28,7 +76,8 @@ const PaymentCard = () => {
         currency: 'lkr',
         metadata: { 
           itemId: params.itemId?.toString() || '', 
-          quantity: params.quantity?.toString() || '1' 
+          quantity: params.quantity?.toString() || '1',
+          userId: firebaseUid || '' // Add Firebase UID to metadata
         }
       };
 
@@ -91,6 +140,11 @@ const PaymentCard = () => {
       return;
     }
 
+    if (!firebaseUid) {
+      console.log('Firebase UID not available yet, waiting...');
+      return;
+    }
+
     isInitializingRef.current = true;
     setLoading(true);
     
@@ -137,7 +191,12 @@ const PaymentCard = () => {
   };
 
   const handlePayment = async () => {
-    if (!ready) return;
+    if (!ready || !firebaseUid) {
+      if (!firebaseUid) {
+        Alert.alert('Error', 'User authentication required. Please log in again.');
+      }
+      return;
+    }
 
     setLoading(true);
     const { error } = await presentPaymentSheet();
@@ -151,7 +210,7 @@ const PaymentCard = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: 'USER_ID',
+            userId: firebaseUid, // Use Firebase UID instead of hardcoded value
             itemId: params.itemId?.toString() || '',
             amount: parseFloat(params.total) || 0,
             currency: 'lkr',
@@ -161,8 +220,12 @@ const PaymentCard = () => {
         });
 
         if (!saveResponse.ok) {
-          throw new Error('Failed to save payment details');
+          const errorData = await saveResponse.json();
+          console.error('Save payment error:', errorData);
+          throw new Error(errorData.error || 'Failed to save payment details');
         }
+        
+        const saveData = await saveResponse.json();
         
         Alert.alert('Success', 'Your payment is confirmed!', [
           {
@@ -183,8 +246,9 @@ const PaymentCard = () => {
     setLoading(false);
   };
 
+  // Initialize payment sheet when Firebase UID is available
   useEffect(() => {
-    if (params.total && params.itemId && !initializationRef.current && !isInitializingRef.current) {
+    if (params.total && params.itemId && firebaseUid && !initializationRef.current && !isInitializingRef.current && !isCheckingLogin) {
       initializePaymentSheet();
     } else if (initializationRef.current) {
       // Already initialized
@@ -201,12 +265,24 @@ const PaymentCard = () => {
         }
       ]);
     }
-  }, []); 
+  }, [firebaseUid, isCheckingLogin]); // Add firebaseUid and isCheckingLogin as dependencies
 
   const formatAmount = (amount) => {
     const num = parseFloat(amount) || 0;
     return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
+
+  // Show loading while checking login status
+  if (isCheckingLogin) {
+    return (
+      <View style={[styles.container, styles.centerContainer]}>
+        <View style={styles.loadingCard}>
+          <ActivityIndicator size="large" color="#4F46E5" />
+          <Text style={styles.loadingText}>Checking authentication...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -251,10 +327,10 @@ const PaymentCard = () => {
           <TouchableOpacity 
             style={[styles.payButton, !ready && styles.payButtonDisabled]}
             onPress={handlePayment}
-            disabled={!ready}
+            disabled={!ready || !firebaseUid}
             activeOpacity={0.8}
           >
-            <View style={[styles.payButtonGradient, !ready && styles.payButtonGradientDisabled]}>
+            <View style={[styles.payButtonGradient, (!ready || !firebaseUid) && styles.payButtonGradientDisabled]}>
               <View style={styles.payButtonContent}>
                 <MaterialIcons 
                   name="lock" 
@@ -263,7 +339,7 @@ const PaymentCard = () => {
                   style={styles.lockIcon} 
                 />
                 <Text style={styles.payButtonText}>
-                  {ready ? 'Pay Securely' : 'Preparing...'}
+                  {ready && firebaseUid ? 'Pay Securely' : 'Preparing...'}
                 </Text>
                 <MaterialIcons 
                   name="arrow-forward" 
@@ -295,6 +371,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A1A',
     padding: 24,
+  },
+  
+  centerContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   
   // Header Section
