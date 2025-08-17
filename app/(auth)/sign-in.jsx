@@ -140,7 +140,7 @@ const SignIn = () => {
         text2: 'Logged in!',
         visibilityTime: 2000,
         autoHide: true,
-        topOffset: 60,
+        topOffset: 50,
       });
       
       setTimeout(() => router.push('/home'), 1000);
