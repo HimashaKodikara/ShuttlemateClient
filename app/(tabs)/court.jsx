@@ -164,7 +164,7 @@ const Courts = () => {
         
       <View style={[styles.container, styles.centered]}>
               <ActivityIndicator size="large" color="#fff" />
-              <Text style={styles.loadingText}>Loading coaches...</Text>
+              <Text style={styles.loadingText}>Loading courts...</Text>
             </View>
       </SafeAreaView>
     
