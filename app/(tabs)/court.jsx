@@ -113,7 +113,6 @@ const Courts = () => {
       })
       .catch(err => {
         console.error('An error occurred', err);
-        // Ultimate fallback - open Play Store to download Maps
         Linking.openURL("https://play.google.com/store/apps/details?id=com.google.android.apps.maps");
       });
   };
@@ -123,14 +122,12 @@ const Courts = () => {
     // Show confirmation to user
     alert(`Booking request sent on ${bookingDetails.date} at ${bookingDetails.timeSlot.start}-${bookingDetails.timeSlot.end}. Please wait for the confirmation from the court owner.`);
 
-    // Close the availability section after booking
     setExpandedCourts(prev => ({
       ...prev,
       [court._id]: false
     }));
   };
 
-  // Function to toggle availability for specific court
   const toggleAvailability = (courtId) => {
     setExpandedCourts(prev => ({
       ...prev,
@@ -494,7 +491,7 @@ const styles = StyleSheet.create({
   priceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(74, 128, 240, 0.9)',
+    backgroundColor: '#1a237e',
     borderRadius: 20,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -571,7 +568,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
     borderRadius: 12,
     paddingVertical: 12,
   },

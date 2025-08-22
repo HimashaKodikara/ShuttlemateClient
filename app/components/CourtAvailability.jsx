@@ -64,9 +64,7 @@ const CourtAvailability = ({court, onBooking}) => {
             {
               text: 'Go to Login',
               onPress: () => {
-                // You may need to adjust this navigation based on your app's structure
-                // If using React Navigation, you might use navigation.navigate('SignIn')
-                // Current implementation assumes you have a router object like in your example
+                
                 if (typeof router !== 'undefined' && router.replace) {
                   router.replace('/sign-in');
                 }
@@ -461,7 +459,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   selectedDateItem: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
   },
   dayText: {
     fontSize: 14,
@@ -507,7 +505,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
   },
   selectedTimeSlot: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
     borderColor: '#4A80F0',
   },
   unavailableSlot: {
@@ -531,7 +529,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   bookButton: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
   },
   selectedDateItem: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
   },
   dayText: {
     fontSize: 14,
@@ -505,8 +505,8 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
   },
   selectedTimeSlot: {
-    backgroundColor: '#4A80F0',
-    borderColor: '#4A80F0',
+    backgroundColor: '#1a237e',
+    borderColor: '#1a237e',
   },
   unavailableSlot: {
     backgroundColor: '#f0f0f0',
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   bookButton: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

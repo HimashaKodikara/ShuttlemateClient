@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     gap: 5
   },
   availabilityButton: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: '#1a237e',
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',

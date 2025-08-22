@@ -17,69 +17,23 @@ import bg from '../../assets/backgorundimg.jpg'
 
 const SESSION_TIMEOUT = 2 * 60 * 60 * 1000;
 
-// Sample news data
-const SAMPLE_NEWS = [
-  {
-    id: '1',
-    title: 'World Championships 2024 Results',
-    description: 'Viktor Axelsen claims his second consecutive world title in a thrilling final match.',
-    source: 'BWF Official',
-    time: '2 hours ago',
-    category: 'Tournament'
-  },
-  {
-    id: '2',
-    title: 'Olympic Qualification Updates',
-    description: 'Latest rankings and qualification standings for Paris 2024 Olympics.',
-    source: 'Olympic News',
-    time: '5 hours ago',
-    category: 'Olympics'
-  },
-  {
-    id: '3',
-    title: 'New Training Techniques',
-    description: 'Professional coaches share innovative training methods for improved performance.',
-    source: 'Badminton Academy',
-    time: '1 day ago',
-    category: 'Training'
-  },
-  {
-    id: '4',
-    title: 'Equipment Review: Latest Rackets',
-    description: 'In-depth analysis of the newest badminton rackets hitting the market this season.',
-    source: 'Gear Guide',
-    time: '2 days ago',
-    category: 'Equipment'
-  },
-  {
-    id: '5',
-    title: 'Junior Championship Highlights',
-    description: 'Rising stars showcase exceptional talent in the youth badminton championships.',
-    source: 'Youth Sports',
-    time: '3 days ago',
-    category: 'Youth'
-  }
-];
+
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [items, setItems] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
-  const [badmintonNews, setBadmintonNews] = useState(SAMPLE_NEWS);
+  const [badmintonNews, setBadmintonNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const[newsLoding, setNewsLoading] = useState(true);
   const auth = getAuth();
 
 
-  const onRefresh = async () => {
+    const onRefresh = async () => {
     setRefreshing(true);
-    await fetchVideos();
-    // Simulate news refresh with a small delay
-    setTimeout(() => {
-      setBadmintonNews([...SAMPLE_NEWS]);
-      setRefreshing(false);
-    }, 1000);
+    await Promise.all([fetchVideos(), fetchNews()]);
+    setRefreshing(false);
   }
-
   const fetchVideos = () => {
     setLoading(true);
     axios.get(`${API_BASE_URL}/videos/`)
@@ -111,8 +65,59 @@ const Home = () => {
       });
   };
 
-  useEffect(() => {
-    fetchVideos();
+  const fetchNews = () => {
+    setNewsLoading(true);
+    return axios.get(`${API_BASE_URL}/news`)
+      .then(response => {
+        const formattedNews = response.data.map((newsItem) => ({
+          id:newsItem._id,
+          title:newsItem.title,
+          description:newsItem.body,
+          source:newsItem.source,
+          time: formatTimeAgo(newsItem.time || newsItem.createdAt),
+          createdAt: newsItem.createdAt
+
+        }));
+        setBadmintonNews(formattedNews);
+        setNewsLoading(false);
+      })
+      .catch(error => {
+        console.error("Error fetching news:",error);
+        setNewsLoading(false);
+      })
+  }
+
+// Helper function to format time ago
+  const formatTimeAgo = (timestamp) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInMs = now - time;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      return diffInMinutes < 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    } else {
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    }
+  };
+
+ useEffect(() => {
+    const loadInitialData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchVideos(), fetchNews()]);
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
   }, []);
 
   // Session Timeout Logic
@@ -184,9 +189,7 @@ const handleLogout = async () => {
     >
       <View style={styles.newsCardContent}>
         <View style={styles.newsHeader}>
-          <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(item.category) }]}>
-           
-          </View>
+           <Text style={styles.categoryText}>News</Text>
           <Text style={styles.newsTime}>{item.time}</Text>
         </View>
         
@@ -417,7 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   categoryText: {
-    color: '#000',
+    color: '#fbf8f8ff',
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
