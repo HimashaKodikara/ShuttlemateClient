@@ -171,15 +171,12 @@ const Shop = () => {
       'khaki': '#F0E68C',
     }
 
-    // Check if color name exists in our map (case insensitive)
     const lowerCaseColorName = colorName ? colorName.toLowerCase() : '';
 
-    // Try exact match first
     if (colorMap[lowerCaseColorName]) {
       return colorMap[lowerCaseColorName];
     }
 
-    // Try partial match
     for (const [key, value] of Object.entries(colorMap)) {
       if (lowerCaseColorName.includes(key)) {
         return value;
@@ -424,7 +421,7 @@ const styles = StyleSheet.create({
   },
   dropdownList: {
     position: 'absolute',
-    top: 85, // Positioned below the selector
+    top: 85, 
     left: 5,
     right: 5,
     backgroundColor: '#1A1A2E',
@@ -493,13 +490,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#fff'
   },
-  // New color container style for the dot and text
   colorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 2,
   },
-  // Color dot style
   colorDot: {
     width: 12,
     height: 12,
@@ -512,7 +507,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fff',
   },
-  // New availability styles
   availabilityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -524,10 +518,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   availableText: {
-    color: '#4CAF50', // Green for available
+    color: '#4CAF50', 
   },
   unavailableText: {
-    color: '#F44336', // Red for out of stock
+    color: '#F44336', 
   },
   quantityText: {
     fontSize: 12,

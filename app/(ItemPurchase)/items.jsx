@@ -479,8 +479,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     padding: 15,
-    paddingBottom: 30, // Add extra padding at the bottom for pull to refresh
-    minHeight: '100%', // Ensure scroll view is always scrollable for refresh to work
+    paddingBottom: 30, 
+    minHeight: '100%', 
   },
   productCard: {
     width: '48%',
@@ -520,7 +520,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-  // Updated color related styles
   colorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -538,7 +537,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#aaa',
   },
-  // New availability styles
   availabilityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -550,10 +548,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   availableText: {
-    color: '#4CAF50', // Green for available
+    color: '#4CAF50', 
   },
   unavailableText: {
-    color: '#F44336', // Red for out of stock
+    color: '#F44336', 
   },
   quantityText: {
     fontSize: 12,

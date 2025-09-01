@@ -11,7 +11,6 @@ const ItemCheckout = () => {
   const [item, setItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
-  // Debug function to log to console and potentially show alert for critical issues
   const logDebug = (message, data, showAlert = false) => {
 
     if (showAlert) {
@@ -48,7 +47,6 @@ const ItemCheckout = () => {
         const itemData = await response.json();
         logDebug('Fetched item from API', itemData);
 
-        // Transform the item data to our desired format
         const processedItem = {
           id: itemData._id,
           name: itemData.name || 'Unknown Item',
@@ -84,7 +82,6 @@ const ItemCheckout = () => {
   };
 
   const handleCheckout = () => {
-    // Pass the selected item and quantity to payment screen
     router.push({
       pathname: '/(Payment)/PaymentCard',
       params: { 

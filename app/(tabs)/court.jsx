@@ -119,7 +119,6 @@ const Courts = () => {
 
   const handleBooking = (bookingDetails, court) => {
     
-    // Show confirmation to user
     alert(`Booking request sent on ${bookingDetails.date} at ${bookingDetails.timeSlot.start}-${bookingDetails.timeSlot.end}. Please wait for the confirmation from the court owner.`);
 
     setExpandedCourts(prev => ({
@@ -139,7 +138,6 @@ const Courts = () => {
     setSelectedArea(area);
     setShowAreaDropdown(false);
     
-    // Filter courts based on selected area
     if (area === 'All Areas') {
       setCourts(allCourts);
     } else {
@@ -148,7 +146,6 @@ const Courts = () => {
     }
   };
 
-  // Display loader while data is being fetched
   if (loading) {
     return (
       <ImageBackground
@@ -169,7 +166,6 @@ const Courts = () => {
     );
   }
 
-  // Display error state if there's an error
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
@@ -307,7 +303,6 @@ const Courts = () => {
                       <Text style={styles.navigateText}>Navigate</Text>
                     </TouchableOpacity>
 
-                    {/* Toggle Availability Button - Now separate from navigate button */}
                     <TouchableOpacity 
                       style={styles.availabilityButton}
                       onPress={() => toggleAvailability(court._id)}

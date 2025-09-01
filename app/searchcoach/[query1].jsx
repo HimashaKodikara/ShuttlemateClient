@@ -93,26 +93,7 @@ const CoachListItem = ({ coach }) => {
         ))}
 
       </View>
-      {/* <Text>{coach.Courts}</Text>
-      <View style={styles.section}>
-        <Text style={styles.infoLabel}>Places</Text>
-        <View style={styles.placesContainer}>
-          {hasPopulatedCourts ? (
-            coach.Courts.map((court, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.placeItem}
-                onPress={() => navigateToCourt(court)}
-              >
-                <Text style={styles.placeLocation}>{court.place || 'Location'}</Text>
-                <Text style={styles.placeCourtClickable}>{court.CourtName}</Text>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <Text style={styles.infoText}>No court information available</Text>
-          )}
-        </View>
-      </View> */}
+      
     </View>
   );
 };

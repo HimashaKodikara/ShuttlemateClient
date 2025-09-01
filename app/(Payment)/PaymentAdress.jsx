@@ -102,7 +102,6 @@ const PaymentAddress = () => {
     try {
       setIsLoading(true);
       
-      // Prepare data to update
       const userData = {
         phoneNumber,
         address1,
@@ -110,7 +109,6 @@ const PaymentAddress = () => {
         postalCode
       };
   
-      // Make API call to update user data
       const response = await axios.put(
         `${API_BASE_URL}/user/${firebaseUid}`,
         userData,
@@ -124,7 +122,6 @@ const PaymentAddress = () => {
       if (response.status === 200) {
         Alert.alert('Success', 'Payment address updated successfully');
         
-        // Navigate to ItemCheckout with the itemId from params
         if (itemId) {
           router.push({
             pathname: '/(Payment)/ItemCheckout',
@@ -150,7 +147,6 @@ const PaymentAddress = () => {
     Keyboard.dismiss();
   };
 
-  // Show loading or login required message
   if (isCheckingLogin) {
     return (
       <SafeAreaView style={styles.container}>
@@ -161,7 +157,6 @@ const PaymentAddress = () => {
     );
   }
 
-  // Show form only if user is logged in
   if (!firebaseUid) {
     return (
       <SafeAreaView style={styles.container}>
@@ -355,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 40,
-    marginBottom: 0,  // Add some bottom margin for scrolling space
+    marginBottom: 0,  
   },
   saveButtonText: {
     color: '#FFFFFF',

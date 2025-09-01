@@ -50,10 +50,9 @@ const Matches = () => {
     fetchMatches();
   }, []);
 
-  // Helper function to determine card color based on match name
   const getCardColor = (matchName) => {
     if (matchName.includes('BADMINTON') || matchName.includes('Badminton')) {
-      return 'rgba(30, 30, 36, 0.9)'; // Semi-transparent for better background visibility
+      return 'rgba(30, 30, 36, 0.9)'; 
     } else if (matchName.includes('UMISF')) {
       return 'rgba(30, 30, 36, 0.9)';
     } else {
@@ -61,7 +60,6 @@ const Matches = () => {
     }
   };
 
-  // Format date string to display properly
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -100,7 +98,6 @@ const Matches = () => {
                 </View>
               </View>
 
-              {/* Loading, Error, or Events */}
               {loading ? (
                 <View style={styles.loaderContainer}>
                   <ActivityIndicator size="large" color="#3b82f6" />
@@ -159,9 +156,7 @@ const Matches = () => {
                             )}
                           </View>
 
-                          {/* Event Details */}
                           <View style={{ flex: 1 }}>
-                            {/* Always display formatted start date */}
                             <Text style={styles.dateText}>{formatDate(match.StartDate)}</Text>
 
                             <View style={[
@@ -181,12 +176,10 @@ const Matches = () => {
                                   </View>
                                 )}
                               </View>
-                              {/* Match Name - Always displayed prominently */}
                               <Text style={styles.matchName}>
                                 {match.MatchName}
                               </Text>
 
-                              {/* Date information */}
                               <View style={styles.dateContainer}>
                                 <View style={styles.dateRow}>
                                   <MaterialIcons name="event" size={16} color="white" />
@@ -254,7 +247,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     padding: 5,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.8)', // Add text shadow for better readability
+    textShadowColor: 'rgba(0, 0, 0, 0.8)', 
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
   },
@@ -266,12 +259,12 @@ const styles = StyleSheet.create({
     paddingBottom: 50,
   },
   calendarHeader: {
-    backgroundColor: 'rgba(30, 30, 36, 0.85)', // Semi-transparent
+    backgroundColor: 'rgba(30, 30, 36, 0.85)', 
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)', // Subtle border
+    borderColor: 'rgba(255, 255, 255, 0.1)', 
   },
   todayBadge: {
     backgroundColor: '#4ade80',
@@ -309,12 +302,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)', // Subtle border
+    borderColor: 'rgba(255, 255, 255, 0.1)', 
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 5, // For Android shadow
+    elevation: 5, 
   },
   matchName: {
     color: 'white',

@@ -48,7 +48,7 @@ const CoachAvailability = ({ coach, onBooking }) => {
   // Fetch user data from session/storage
   const fetchUserData = async () => {
     try {
-      // Get firebaseUid from AsyncStorage (session)
+     
       const firebaseUid = await AsyncStorage.getItem('firebaseUid');
       
       if (!firebaseUid) {
@@ -64,9 +64,7 @@ const CoachAvailability = ({ coach, onBooking }) => {
             {
               text: 'Go to Login',
               onPress: () => {
-                // You may need to adjust this navigation based on your app's structure
-                // If using React Navigation, you might use navigation.navigate('SignIn')
-                // Current implementation assumes you have a router object like in your example
+                
                 if (typeof router !== 'undefined' && router.replace) {
                   router.replace('/sign-in');
                 }
@@ -107,7 +105,6 @@ const CoachAvailability = ({ coach, onBooking }) => {
       );
 
       if (response.data.success) {
-        // Process the availability data
         processAvailabilityData(response.data.data);
       } else {
         setError('Failed to fetch availability data');
@@ -121,11 +118,9 @@ const CoachAvailability = ({ coach, onBooking }) => {
   };
 
   useEffect(() => {
-    // Fetch user data and availability when component mounts
     const initialize = async () => {
       setLoading(true);
       try {
-        // Get firebaseUid from AsyncStorage
         const storedFirebaseUid = await AsyncStorage.getItem('firebaseUid');
         
         if (!storedFirebaseUid) {
@@ -141,7 +136,6 @@ const CoachAvailability = ({ coach, onBooking }) => {
               {
                 text: 'Go to Login',
                 onPress: () => {
-                  // Navigate to sign-in page
                   if (typeof router !== 'undefined' && router.replace) {
                     router.replace('/sign-in');
                   }
@@ -152,13 +146,11 @@ const CoachAvailability = ({ coach, onBooking }) => {
           return;
         }
         
-        // Fetch user data using the Firebase UID
         const response = await axios.get(`${API_BASE_URL}/user/${storedFirebaseUid}`);
         if (response.data && response.data._id) {
           setUserId(response.data._id);
         }
         
-        // Fetch availability data
         await fetchAvailability();
       } catch (err) {
         console.error('Error during initialization:', err);
@@ -171,27 +163,21 @@ const CoachAvailability = ({ coach, onBooking }) => {
     initialize();
   }, [coach._id]);
 
-  // Process availability data from backend and organize it by date
   const processAvailabilityData = (availabilityData) => {
     const processedAvailability = {};
 
-    // For each of the next 7 days
     weekDates.forEach(dayInfo => {
-      // Find slots for this day of week
       const daySlots = availabilityData.filter(
         slot => slot.dayOfWeek === dayInfo.dayNum && slot.isRecurring
       );
       
-      // Check for existing bookings on this date
       const existingBookings = coach.bookings ? coach.bookings.filter(booking => {
         const bookingDate = new Date(booking.date);
         const bookingDateStr = formatDate(bookingDate);
         return bookingDateStr === dayInfo.date && booking.status !== 'cancelled';
       }) : [];
       
-      // Convert to time slots format
       processedAvailability[dayInfo.date] = daySlots.map((slot, idx) => {
-        // Check if this slot is booked
         const isBooked = existingBookings.some(booking => 
           booking.startTime <= slot.startTime && booking.endTime >= slot.endTime
         );
@@ -208,19 +194,16 @@ const CoachAvailability = ({ coach, onBooking }) => {
     setAvailability(processedAvailability);
   };
 
-  // Get available time slots for the selected date
   const getAvailableTimeSlots = () => {
     return availability[selectedDate] || [];
   };
 
-  // Handle booking request
   const handleBooking = async () => {
     if (!selectedTimeSlot) {
       Alert.alert('Error', 'Please select a time slot');
       return;
     }
 
-    // Check if we have user ID
     if (!userId) {
       Alert.alert('Error', 'Unable to identify user. Please log in again.');
       return;
@@ -229,36 +212,30 @@ const CoachAvailability = ({ coach, onBooking }) => {
     try {
       setBookingInProgress(true);
       
-      // Get the selected date
       const bookingDate = selectedDate;
       
       const courtId = null; 
       const notes = ""; 
       
-      // Create booking payload
       const bookingData = {
         date: bookingDate,
         startTime: selectedTimeSlot.start,
         endTime: selectedTimeSlot.end,
-        userId: userId, // Use the userId from state instead of hardcoded value
+        userId: userId, 
         courtId,
         notes,
       };
       
-      // Send booking request to the server
       const response = await axios.post(
         `${API_BASE_URL}/Coachers/${coach._id}/bookings`,
         bookingData
       );
       
       if (response.data.success) {
-        // Success! Refresh availability data
         await fetchAvailability();
         
-        // Reset selection after booking
         setSelectedTimeSlot(null);
         
-        // Notify parent component
         onBooking({
           coachId: coach._id,
           coachName: coach.CoachName,

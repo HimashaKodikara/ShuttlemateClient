@@ -191,7 +191,6 @@ const RootLayout = () => {
               });
               
               if (response.ok) {
-                // Token registered successfully
               } else {
                 console.error("Failed to register token:", response.status);
               }
@@ -215,18 +214,15 @@ const RootLayout = () => {
             }
           });
 
-        // Handle notification when app is opened from background
         messaging().onNotificationOpenedApp(remoteMessage => {
           console.log('Opened from background state:', remoteMessage.notification);
           handleNotificationNavigation(remoteMessage.data);
         });
 
-        // Handle notification when app is in background and killed
         messaging().setBackgroundMessageHandler(async remoteMessage => {
           console.log('Handled in background:', remoteMessage);
         });
 
-        // Handle foreground notifications
         unsubscribeOnMessage = messaging().onMessage(async remoteMessage => {
           const notification = remoteMessage.notification;
           const data = remoteMessage.data;

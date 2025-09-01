@@ -76,7 +76,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A1A', // Dark blue/black background as shown in image
+    backgroundColor: '#0A0A1A', 
   },
   scrollContainer: {
     flexGrow: 1,

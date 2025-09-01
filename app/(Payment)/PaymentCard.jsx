@@ -15,17 +15,14 @@ const PaymentCard = () => {
   const [firebaseUid, setFirebaseUid] = useState(null);
   const [isCheckingLogin, setIsCheckingLogin] = useState(true);
   
-  // Prevent multiple initializations
   const initializationRef = useRef(false);
   const isInitializingRef = useRef(false);
 
-  // Check login status and get Firebase UID
   useEffect(() => {
     const checkLoginAndGetUid = async () => {
       try {
         setIsCheckingLogin(true);
         
-        // Get user ID from AsyncStorage
         const storedUserId = await AsyncStorage.getItem('firebaseUid');
         
         if (!storedUserId) {
@@ -66,7 +63,7 @@ const PaymentCard = () => {
   const fetchPaymentSheetParams = async () => {
     try {
       const totalAmount = parseFloat(params.total) || 0;
-      const quantity = parseInt(params.quantity) || 1; // Get quantity from params
+      const quantity = parseInt(params.quantity) || 1; 
       
       if (totalAmount <= 0) {
         throw new Error(`Invalid payment amount: ${params.total}`);
@@ -77,12 +74,12 @@ const PaymentCard = () => {
       }
 
       const requestBody = {
-        amount: Math.round(totalAmount * 100), // Convert to cents
+        amount: Math.round(totalAmount * 100), 
         currency: 'lkr',
         metadata: { 
           itemId: params.itemId?.toString() || '', 
-          quantity: quantity.toString(), // Use quantity from params
-          userId: firebaseUid || '' // Use Firebase UID
+          quantity: quantity.toString(), 
+          userId: firebaseUid || '' 
         }
       };
 
@@ -209,12 +206,12 @@ const PaymentCard = () => {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
       try {
-        const quantity = parseInt(params.quantity) || 1; // Get quantity from params
+        const quantity = parseInt(params.quantity) || 1; 
         
         const savePaymentBody = {
-          userId: firebaseUid, // Use Firebase UID
+          userId: firebaseUid, 
           itemId: params.itemId?.toString() || '',
-          quantity: quantity, // Use quantity from params
+          quantity: quantity, 
           amount: parseFloat(params.total) || 0,
           currency: 'lkr',
           paymentIntentId: paymentIntentId,
@@ -258,7 +255,6 @@ const PaymentCard = () => {
   // Initialize payment sheet when Firebase UID is available
   useEffect(() => {
     if (params.total && params.itemId && firebaseUid && !initializationRef.current && !isInitializingRef.current && !isCheckingLogin) {
-      // Validate required parameters
       const totalAmount = parseFloat(params.total);
       const quantity = parseInt(params.quantity);
       
@@ -284,7 +280,6 @@ const PaymentCard = () => {
 
       initializePaymentSheet();
     } else if (initializationRef.current) {
-      // Already initialized
     } else if (!params.total || !params.itemId || !params.quantity) {
       console.error('Missing required parameters:', {
         total: params.total,
@@ -298,14 +293,12 @@ const PaymentCard = () => {
         }
       ]);
     }
-  }, [firebaseUid, isCheckingLogin]); // Add firebaseUid and isCheckingLogin as dependencies
-
+  }, [firebaseUid, isCheckingLogin]); 
   const formatAmount = (amount) => {
     const num = parseFloat(amount) || 0;
     return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  // Show loading while checking login status
   if (isCheckingLogin) {
     return (
       <View style={[styles.container, styles.centerContainer]}>

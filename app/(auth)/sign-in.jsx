@@ -13,7 +13,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import API_BASE_URL from '../../server/api.config.js';
 
-// Make sure to call this at the top level
 WebBrowser.maybeCompleteAuthSession();
 
 // Initialize Firebase Auth
@@ -68,7 +67,6 @@ const SignIn = () => {
       } else {
         console.log('No user found with this email in the database');
         
-        // Handle case where user exists in Firebase but not in MongoDB
         const newUserResponse = await createUserInMongoDB(userEmail, auth.currentUser.uid);
         if (newUserResponse && newUserResponse._id) {
           await AsyncStorage.setItem('firebaseUid', auth.currentUser.uid);
@@ -308,7 +306,6 @@ const SignIn = () => {
         </View>
       </ScrollView>
       
-      {/* Toast component placed at the bottom of the component */}
       <Toast />
     </SafeAreaView>
   )

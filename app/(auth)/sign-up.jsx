@@ -250,26 +250,128 @@ const Signup = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A1A' },
-  formContainer: { padding: 20, paddingTop: 40, flex: 1 },
-  headerText: { fontSize: 30, fontWeight: 'bold', color: '#CC9900', marginBottom: 5 },
-  subHeaderText: { fontSize: 16, color: '#CC9900', marginBottom: 25 },
-  inputContainer: { marginBottom: 20 },
-  label: { fontSize: 14, color: 'white', marginBottom: 5 },
-  input: { borderBottomWidth: 1, borderBottomColor: '#444', paddingVertical: 8, color: 'white', fontSize: 16 },
-  createButton: { backgroundColor: 'white', borderRadius: 25, padding: 15, alignItems: 'center', marginVertical: 20 },
-  createButtonText: { color: 'black', fontSize: 16, fontWeight: '500' },
-  dividerContainer: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
-  divider: { flex: 1, height: 1, backgroundColor: '#444' },
-  dividerText: { paddingHorizontal: 10, color: 'white' },
-  googleButton: { flexDirection: 'row', backgroundColor: 'white', borderRadius: 25, padding: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  googleIcon: { width: 30, height: 30, marginRight: 10 },
-  googleButtonText: { color: '#333', fontSize: 16, fontWeight: '500' },
-  signinContainerWrapper: { position: 'relative', alignItems: 'center', marginTop: 10, height: 200 },
-  backgroundImage: { position: 'absolute', width: '100%', height: '100%', opacity: 0.6 },
-  signinContainer: { flexDirection: 'row', justifyContent: 'center', zIndex: 2, paddingTop: 20 },
-  signinText: { color: '#aaa', marginRight: 5 },
-  signinLink: { color: '#0095ff' },
+  container:
+  {
+    flex: 1,
+    backgroundColor: '#0A0A1A'
+  },
+
+  formContainer:
+  {
+    padding: 20,
+    paddingTop: 40,
+    flex: 1
+  },
+  headerText:
+  {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#CC9900',
+    marginBottom: 5
+  },
+  subHeaderText:
+  {
+    fontSize: 16,
+    color: '#CC9900',
+    marginBottom: 25
+  },
+  inputContainer:
+    { marginBottom: 20 },
+  label:
+  {
+    fontSize: 14,
+    color: 'white',
+    marginBottom: 5
+  },
+  input:
+  {
+    borderBottomWidth: 1,
+    borderBottomColor: '#444',
+    paddingVertical: 8,
+    color: 'white',
+    fontSize: 16
+  },
+  createButton:
+  {
+    backgroundColor: 'white',
+    borderRadius: 25,
+    padding: 15,
+    alignItems: 'center',
+    marginVertical: 20
+  },
+  createButtonText:
+  {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: '500'
+  },
+  dividerContainer:
+  {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20
+  },
+  divider:
+  {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#444'
+  },
+  dividerText:
+  {
+    paddingHorizontal: 10,
+    color: 'white'
+  },
+  googleButton:
+  {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 25,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20
+  },
+  googleIcon:
+  {
+    width: 30,
+    height: 30,
+    marginRight: 10
+  },
+  googleButtonText:
+  {
+    color: '#333',
+    fontSize: 16,
+    fontWeight: '500'
+  },
+  signinContainerWrapper:
+  {
+    position: 'relative',
+    alignItems: 'center',
+    marginTop: 10,
+    height: 200
+  },
+  backgroundImage:
+  {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.6
+  },
+  signinContainer:
+  {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    zIndex: 2,
+    paddingTop: 20
+  },
+  signinText:
+  {
+    color: '#aaa',
+    marginRight: 5
+  },
+  signinLink:
+    { color: '#0095ff' },
 });
 
 export default Signup;
