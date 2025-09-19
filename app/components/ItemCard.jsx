@@ -16,14 +16,12 @@ const ItemCard = ({ item, onClose }) => {
     availableqty
   } = item || {};
 
-  // Convert features string to array if it exists
   const featuresList = features ? features.split(',').map(feature => feature.trim()) : [];
 
   return (
     <View style={styles.modalContainer}>
       <ScrollView style={styles.scrollContainer}>
         <View style={styles.card}>
-          {/* Close button positioned at top right */}
           <TouchableOpacity
             style={styles.closeIconButton}
             onPress={onClose}
@@ -41,19 +39,16 @@ const ItemCard = ({ item, onClose }) => {
           </View>
 
           <View style={styles.infoContainer}>
-            {/* Product name and brand */}
             <View style={styles.headingRow}>
               <Text style={styles.title}>{name || 'Product Name'}</Text>
               {brand && <Text style={styles.brand}>by {brand}</Text>}
             </View>
-            {/* Shop name with icon */}
             {shopName && (
               <View style={styles.shopRow}>
                    <Ionicons name="storefront-outline" size={18} color="#777" style={styles.shopIcon} />
                 <Text style={styles.shopName}>{shopName}</Text>
               </View>
             )}
-            {/* Price and availability in same row */}
             <View style={styles.priceRow}>
               <Text style={styles.price}>Rs. {parseInt(price || 15000).toLocaleString()}</Text>
               {availableqty && (

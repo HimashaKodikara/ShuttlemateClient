@@ -259,8 +259,7 @@ const Shop = () => {
         resizeMode="cover"
       >
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#4A90E2" />
-          
+          <ActivityIndicator size="large" color="#4A90E2" />         
         </View>
       </ImageBackground>
     )
@@ -364,7 +363,6 @@ const Shop = () => {
             <ItemCard item={selectedItem} onClose={closeModal} />
           </Modal>
 
-          {/* Shop Detail Modal */}
           {selectedShop && (
             <ShopCard
               visible={isShopModalVisible}

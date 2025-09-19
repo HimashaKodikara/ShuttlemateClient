@@ -63,13 +63,11 @@ const Courts = () => {
         setAllCourts(courtsData);
         setCourts(courtsData);
         
-        // Extract unique areas from courts data
         const uniqueAreas = [...new Set(courtsData.map(court => court.place))];
         setAreas(['All Areas', ...uniqueAreas]);
         
         setLoading(false);
         
-        // If there's a selected court from navigation, set it
         if (route.params?.selectedCourtId) {
           setSelectedCourtId(route.params.selectedCourtId);
         }

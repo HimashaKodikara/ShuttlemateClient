@@ -11,13 +11,11 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
 
 
     const handlePhoneCall = () => {
-        // Use shop data if available, otherwise use default
         const phoneNumber = shop?.Tel;
         Linking.openURL(`tel:${phoneNumber}`);
     };
 
     const handleOpenWebsite = () => {
-        // Use shop data if available, otherwise use default
         const website = shop?.website || 'http://www.eliteshuttler.com';
         Linking.openURL(website);
     };
@@ -26,7 +24,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
         
         router.push({
           pathname: '/items',
-          params: { shopId: shop._id }, // or whatever variable holds it
+          params: { shopId: shop._id }, 
         });
       };
       
@@ -44,7 +42,6 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                         <Text style={styles.closeButton}>✕</Text>
                     </TouchableOpacity>
 
-                    {/* Header with image and title */}
                     <View style={styles.header}>
                         <Image
                             source={{ uri: shop?.ShopPhoto || 'https://via.placeholder.com/350x150' }}
@@ -64,7 +61,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                         </View>
                         <TouchableOpacity style={styles.contactRow} onPress={handlePhoneCall}>
                             <LottieView
-                                source={require('../../assets/lottie/phone.json')} // Adjust the path to your Lottie file
+                                source={require('../../assets/lottie/phone.json')} 
                                 autoPlay
                                 loop
                                 style={styles.iconPlaceholder}
@@ -73,7 +70,7 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.contactRow} onPress={handleOpenWebsite}>
                             <LottieView
-                                source={require('../../assets/lottie/web.json')} // Adjust the path to your Lottie file
+                                source={require('../../assets/lottie/web.json')} 
                                 autoPlay
                                 loop
                                 
@@ -119,12 +116,11 @@ const ShopCard = ({ visible, onRequestClose, shop }) => {
                         </ScrollView>
                     </View>
 
-                    {/* Shop Now Button */}
                     <TouchableOpacity
                         style={styles.shopButton}
                         onPress={handleShopNow}
                     >
-                        <Text style={styles.shopButtonText} >Shop Now</Text>
+                        <Text style={styles.shopButtonText}>Shop Now</Text>
                     </TouchableOpacity>
                 </View>
             </View>

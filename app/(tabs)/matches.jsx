@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Image, ScrollView, StyleSheet, ActivityIndicator, ImageBackground } from 'react-native';
+import { View, Text, TouchableOpacity, Image, ScrollView, StyleSheet, ActivityIndicator, ImageBackground, RefreshControl, } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -11,42 +11,52 @@ const Matches = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  
 
   const currentDate = new Date();
   const day = currentDate.getDate();
   const month = currentDate.toLocaleString('default', { month: 'short' });
   const year = currentDate.getFullYear();
 
-  // Fetch matches data from API
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/matches/`);
+  // Move fetchMatches function outside of useEffect so it can be reused
+  const fetchMatches = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/matches/`);
 
-        if (response.data.success) {
-          const currentDate = new Date();
+      if (response.data.success) {
+        const currentDate = new Date();
 
-          const filteredAndSortedMatches = response.data.matches
-            .filter(match => {
-              const endDate = match.EndDate ? new Date(match.EndDate) : null;
-              // If endDate exists, compare it with currentDate
-              return !endDate || endDate >= currentDate;
-            })
-            .sort((a, b) => new Date(a.StartDate) - new Date(b.StartDate));
+        const filteredAndSortedMatches = response.data.matches
+          .filter(match => {
+            const endDate = match.EndDate ? new Date(match.EndDate) : null;
+            // If endDate exists, compare it with currentDate
+            return !endDate || endDate >= currentDate;
+          })
+          .sort((a, b) => new Date(a.StartDate) - new Date(b.StartDate));
 
-          setMatches(filteredAndSortedMatches);
-        } else {
-          setError('Failed to fetch matches');
-        }
-      } catch (err) {
-        console.error('Error fetching matches:', err);
-        setError('Network error. Please try again.');
-      } finally {
-        setLoading(false);
+        setMatches(filteredAndSortedMatches);
+      } else {
+        setError('Failed to fetch matches');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching matches:', err);
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+    setError(null); // Clear any existing errors
+    await fetchMatches();
+    setRefreshing(false);
+  };
+
+  // Fetch matches data from API on component mount
+  useEffect(() => {
     fetchMatches();
   }, []);
 
@@ -78,7 +88,13 @@ const Matches = () => {
             <Text style={styles.headerTitle}>Upcoming Matches</Text>
           </View>
 
-          <ScrollView style={styles.scrollView}>
+          <ScrollView style={styles.scrollView}
+           refreshControl={
+                    <RefreshControl
+                      refreshing={refreshing}
+                      onRefresh={onRefresh}
+                    />
+                  }>
             <View style={styles.contentContainer}>
               {/* Calendar Header */}
               <View style={styles.calendarHeader}>
@@ -110,22 +126,8 @@ const Matches = () => {
                   <TouchableOpacity
                     style={styles.retryButton}
                     onPress={() => {
-                      setLoading(true);
                       setError(null);
-                      // Re-fetch data
-                      axios.get(`${API_BASE_URL}/matches`)
-                        .then(response => {
-                          if (response.data.success) {
-                            setMatches(response.data.matches);
-                          } else {
-                            setError('Failed to fetch matches');
-                          }
-                        })
-                        .catch(err => {
-                          console.error('Error fetching matches:', err);
-                          setError('Network error. Please try again.');
-                        })
-                        .finally(() => setLoading(false));
+                      fetchMatches();
                     }}
                   >
                     <Text style={styles.retryButtonText}>Retry</Text>
