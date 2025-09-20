@@ -99,7 +99,7 @@ const Shop = () => {
       setIsDropdownOpen(false)
 
       return () => {
-        // Cleanup if needed
+
       }
     }, [])
   )
@@ -187,7 +187,7 @@ const Shop = () => {
     return '#CCCCCC';
   }
 
-  const renderItem = ({ item }) => (
+ const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.itemCard}
       onPress={() => handleItemPress(item)}
@@ -198,7 +198,8 @@ const Shop = () => {
         resizeMode="cover"
       />
       <View style={styles.itemDetails}>
-        <Text style={styles.itemName}>{item.name}</Text>
+        <Text style={styles.itemName}>{item.name || 'Unnamed Item'}</Text>
+
         {item.color && (
           <View style={styles.colorContainer}>
             <View
@@ -218,7 +219,7 @@ const Shop = () => {
           </Text>
           {isItemAvailable(item.availableqty) && (
             <Text style={styles.quantityText}>
-              ({item.availableqty} left)
+              ({item.availableqty || 0} left)
             </Text>
           )}
         </View>
@@ -259,7 +260,7 @@ const Shop = () => {
         resizeMode="cover"
       >
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#4A90E2" />         
+          <ActivityIndicator size="large" color="#4A90E2" />
         </View>
       </ImageBackground>
     )
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   },
   dropdownList: {
     position: 'absolute',
-    top: 85, 
+    top: 85,
     left: 5,
     right: 5,
     backgroundColor: '#1A1A2E',
@@ -516,10 +517,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   availableText: {
-    color: '#4CAF50', 
+    color: '#4CAF50',
   },
   unavailableText: {
-    color: '#F44336', 
+    color: '#F44336',
   },
   quantityText: {
     fontSize: 12,

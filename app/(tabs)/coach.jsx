@@ -38,23 +38,19 @@ const Coaches = () => {
     setRefreshing(false);
   };
 
+  // Fetch coaches from the API, update state, and extract unique training types
   const fetchCoaches = async () => {
     try {
       setLoading(true);
       setError(null); // Clear previous errors
       
-      
       const response = await axios.get(`${API_BASE_URL}/Coachers/`);
       
-  
-      
       if (response.data && response.data.success) {
-       
-        
         setCoaches(response.data.coachers || []);
         setFilteredCoaches(response.data.coachers || []);
 
-        // Extract all unique training types
+        // Extract all unique training types from the coaches list
         const allTrainingTypes = new Set();
         if (response.data.coachers && Array.isArray(response.data.coachers)) {
           response.data.coachers.forEach(coach => {

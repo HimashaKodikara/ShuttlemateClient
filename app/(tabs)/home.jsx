@@ -4,8 +4,6 @@ import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { FlatList } from 'react-native';
 import images from '../../constants/images';
 import SearchInput from '../components/SearchInput';
-import Trending from '../components/Trending';
-import EmptyState from '../components/EmptyState';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAuth, signOut } from '@react-native-firebase/auth';
@@ -34,6 +32,7 @@ const Home = () => {
     await Promise.all([fetchVideos(), fetchNews()]);
     setRefreshing(false);
   }
+  // Fetch videos from the API, update items and trending videos state
   const fetchVideos = () => {
     setLoading(true);
     axios.get(`${API_BASE_URL}/videos/`)
@@ -41,14 +40,15 @@ const Home = () => {
         setItems(response.data.videos);
 
         if (response.data.videos && response.data.videos.length > 0) {
-          // Sort by most recent (assuming there's a timestamp or id that indicates recency)
+          // Sort videos by creation date (newest first)
           const sortedVideos = [...response.data.videos].sort((a, b) => {
-            // If you have a timestamp field, use that for sorting
             return new Date(b.createdAt) - new Date(a.createdAt);
           });
 
+          // Take the 3 most recent videos as trending
           const recentVideos = sortedVideos.slice(0, 3);
 
+          // Format trending videos for display
           const formattedTrending = recentVideos.map((video, index) => ({
             $id: video.id ? video.id.toString() : index.toString(),
             imgUrl: video.imgUrl,
@@ -65,24 +65,24 @@ const Home = () => {
       });
   };
 
+  // Fetch latest badminton news from the API and update state
   const fetchNews = () => {
     setNewsLoading(true);
     return axios.get(`${API_BASE_URL}/news`)
       .then(response => {
         const formattedNews = response.data.map((newsItem) => ({
-          id:newsItem._id,
-          title:newsItem.title,
-          description:newsItem.body,
-          source:newsItem.source,
+          id: newsItem._id,
+          title: newsItem.title,
+          description: newsItem.body,
+          source: newsItem.source,
           time: formatTimeAgo(newsItem.time || newsItem.createdAt),
           createdAt: newsItem.createdAt
-
         }));
         setBadmintonNews(formattedNews);
         setNewsLoading(false);
       })
       .catch(error => {
-        console.error("Error fetching news:",error);
+        console.error("Error fetching news:", error);
         setNewsLoading(false);
       })
   }
@@ -146,6 +146,7 @@ const Home = () => {
   }, []);
 
   
+// Handles user logout with confirmation dialog
 const handleLogout = async () => {
   Alert.alert(
     "Logout",

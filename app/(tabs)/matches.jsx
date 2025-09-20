@@ -50,7 +50,7 @@ const Matches = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    setError(null); // Clear any existing errors
+    setError(null);
     await fetchMatches();
     setRefreshing(false);
   };
@@ -70,6 +70,8 @@ const Matches = () => {
     }
   };
 
+
+    // Helper function to format date strings as "day month year"
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);

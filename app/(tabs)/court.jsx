@@ -55,6 +55,7 @@ const Courts = () => {
     Linking.openURL(formattedPhoneNumber).catch((err) => console.error('Error making the call:', err));
   };
 
+  // Fetch courts data from the API and set state for courts, areas, and handle loading/error
   const fetchCourts = () => {
     setLoading(true);
     axios.get(`${API_BASE_URL}/courts/`)
@@ -115,6 +116,14 @@ const Courts = () => {
       });
   };
 
+  /**
+   * Handles the booking process for a court.
+   *
+   * Displays an alert to the user with the booking details and updates the expanded courts state
+   * to collapse the court's details after booking.
+   *
+   
+   */
   const handleBooking = (bookingDetails, court) => {
     
     alert(`Booking request sent on ${bookingDetails.date} at ${bookingDetails.timeSlot.start}-${bookingDetails.timeSlot.end}. Please wait for the confirmation from the court owner.`);

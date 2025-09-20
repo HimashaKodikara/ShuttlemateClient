@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons'; // Make sure to install expo-vector-icons
+import { Ionicons } from '@expo/vector-icons'; 
 import shop from '../../assets/icons/shop.png'
 const ItemCard = ({ item, onClose }) => {
   const {
